@@ -1,0 +1,402 @@
+// Prisma schema for Toko Kopi Jaya CRM & Ordering System
+// Used primarily for Prisma Studio (web DB viewer)
+// DB engine: MySQL | Backend ORM: TypeORM (this schema is for Studio only)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum OrderSource {
+  Mobile_App      @map("Mobile App")
+  POS_In_Store    @map("POS - In-Store")
+  POS_GoFood      @map("POS - GoFood")
+  POS_GrabFood    @map("POS - GrabFood")
+  POS_ShopeeFood  @map("POS - ShopeeFood")
+  Admin_Dashboard @map("Admin Dashboard")
+  Kiosk
+}
+
+enum OrderType {
+  dine_in      @map("dine-in")
+  takeaway
+  click_collect @map("click-collect")
+}
+
+enum OrderStatus {
+  pending
+  paid
+  preparing
+  ready_for_pickup
+  completed
+  cancelled
+}
+
+enum PaymentMethod {
+  QRIS
+  GoPay
+  OVO
+  Dana
+  ShopeePay
+  Cash
+  Debit_Card   @map("Debit Card")
+  Credit_Card  @map("Credit Card")
+  Bank_Transfer @map("Bank Transfer")
+}
+
+enum PaymentStatus {
+  pending
+  success
+  failed
+  expired
+  refunded
+}
+
+enum MemberTier {
+  Bronze
+  Silver
+  Gold
+  Platinum
+}
+
+enum PointTransactionType {
+  earned
+  redeemed
+  expired
+  adjusted
+  refunded
+  bonus
+}
+
+enum StaffRole {
+  admin
+  cashier
+  manager
+  barista
+}
+
+enum OutletStatus {
+  active
+  inactive
+  maintenance
+}
+
+enum ModifierType {
+  add
+  remove
+}
+
+enum TaxType {
+  nominal
+  percentage
+}
+
+enum ServiceChargeType {
+  nominal
+  percentage
+}
+
+enum DiscountType {
+  nominal
+  percentage
+}
+
+// ─── TABLES ───────────────────────────────────────────────────────────────────
+
+model categories {
+  category_id BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  name        String     @db.VarChar(100)
+  description String?    @db.Text
+  is_active   Boolean    @default(true)
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  products    products[]
+}
+
+model products {
+  product_id    BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  category_id   BigInt          @db.UnsignedBigInt
+  name          String          @db.VarChar(100)
+  description   String?         @db.Text
+  base_price    Decimal         @db.Decimal(12, 2)
+  img_url       String?         @db.Text
+  earning_points Int            @default(0) @db.UnsignedInt
+  is_available  Boolean         @default(true)
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+  category      categories      @relation(fields: [category_id], references: [category_id])
+  order_items   order_items[]
+  reedem        reedem?
+  favorite      favorite[]
+
+  @@index([category_id])
+  @@index([is_available])
+}
+
+model member {
+  member_id              BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  name                   String           @db.VarChar(100)
+  email                  String?          @unique @db.VarChar(100)
+  phone_number           String?          @unique @db.VarChar(20)
+  birthday               DateTime?        @db.Date
+  fav_menu               String?          @db.VarChar(100)
+  password               String           @db.VarChar(255)
+  current_points         Int              @default(0) @db.UnsignedInt
+  lifetime_points_earned Int              @default(0) @db.UnsignedInt
+  tier                   MemberTier       @default(Bronze)
+  is_active              Boolean          @default(true)
+  last_login             DateTime?
+  created_at             DateTime         @default(now())
+  updated_at             DateTime         @updatedAt
+  orders                 orders[]
+  points_history         points_history[]
+
+  @@index([email])
+  @@index([phone_number])
+  @@index([tier])
+}
+
+model customer {
+  customer_id  BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  name         String   @db.VarChar(100)
+  phone_number String?  @db.VarChar(20)
+  created_at   DateTime @default(now())
+  orders       orders[]
+}
+
+model outlet {
+  outlet_id  BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  name       String       @db.VarChar(100)
+  address    String?      @db.Text
+  latitude   Decimal?     @db.Decimal(10, 7)
+  longitude  Decimal?     @db.Decimal(10, 7)
+  phone      String?      @db.VarChar(20)
+  status     OutletStatus @default(active)
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+  staff      staff[]
+  orders     orders[]
+  shift      shift[]
+
+  @@index([status])
+}
+
+model staff {
+  staff_id       BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  name           String           @db.VarChar(100)
+  role           StaffRole
+  username       String           @unique(map: "unique_username_field") @db.VarChar(50)
+  password       String           @db.VarChar(255)
+  outlet_id      BigInt?          @db.UnsignedBigInt
+  is_active      Boolean          @default(true)
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+  outlet         outlet?          @relation(fields: [outlet_id], references: [outlet_id])
+  orders         orders[]
+  shift          shift[]
+  favorite       favorite[]
+  points_history points_history[]
+
+  @@index([role])
+}
+
+model tax {
+  tax_id    BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  name      String  @db.VarChar(100)
+  type      TaxType @default(percentage)
+  value     Decimal @db.Decimal(12, 2)
+  is_active Boolean @default(true)
+  orders    orders[]
+}
+
+model service_charge {
+  service_charge_id BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  name              String            @db.VarChar(100)
+  type              ServiceChargeType @default(percentage)
+  value             Decimal           @db.Decimal(12, 2)
+  is_active         Boolean           @default(true)
+  orders            orders[]
+}
+
+model discount {
+  discount_id   BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  name          String    @db.VarChar(100)
+  code          String?   @unique(map: "unique_discount_code_field") @db.VarChar(50)
+  type          DiscountType
+  value         Decimal   @db.Decimal(12, 2)
+  min_purchase  Decimal   @default(0) @db.Decimal(12, 2)
+  max_discount  Decimal?  @db.Decimal(12, 2)
+  usage_limit   Int?      @db.UnsignedInt
+  usage_count   Int       @default(0) @db.UnsignedInt
+  valid_from    DateTime?
+  valid_until   DateTime?
+  is_active     Boolean   @default(true)
+  orders        orders[]
+}
+
+model orders {
+  order_id          BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  member_id         BigInt?       @db.UnsignedBigInt
+  customer_id       BigInt?       @db.UnsignedBigInt
+  staff_id          BigInt        @db.UnsignedBigInt
+  outlet_id         BigInt        @db.UnsignedBigInt
+  source            OrderSource   @default(POS_In_Store)
+  order_type        OrderType?    @default(takeaway)
+  table_number      String?       @db.VarChar(10)
+  status            OrderStatus   @default(pending)
+  pickup_code       String?       @unique @db.VarChar(10)
+  subtotal          Decimal       @db.Decimal(12, 2)
+  tax_id            BigInt?       @db.UnsignedBigInt
+  service_charge_id BigInt?       @db.UnsignedBigInt
+  discount_id       BigInt?       @db.UnsignedBigInt
+  discount_amount   Decimal       @default(0) @db.Decimal(12, 2)
+  total_final       Decimal       @db.Decimal(12, 2)
+  points_earned     Int           @default(0) @db.UnsignedInt
+  created_at        DateTime      @default(now())
+  paid_at           DateTime?
+  ready_at          DateTime?
+  completed_at      DateTime?
+  member            member?       @relation(fields: [member_id], references: [member_id])
+  customer          customer?     @relation(fields: [customer_id], references: [customer_id])
+  staff             staff         @relation(fields: [staff_id], references: [staff_id])
+  outlet            outlet        @relation(fields: [outlet_id], references: [outlet_id])
+  tax               tax?          @relation(fields: [tax_id], references: [tax_id])
+  service_charge    service_charge? @relation(fields: [service_charge_id], references: [service_charge_id])
+  discount          discount?     @relation(fields: [discount_id], references: [discount_id])
+  order_items       order_items[]
+  payment           payment[]
+  points_history    points_history[]
+
+  @@index([member_id])
+  @@index([source])
+  @@index([status])
+  @@index([created_at])
+  @@index([pickup_code])
+}
+
+model order_items {
+  order_item_id          BigInt               @id @default(autoincrement()) @db.UnsignedBigInt
+  order_id               BigInt               @db.UnsignedBigInt
+  product_id             BigInt               @db.UnsignedBigInt
+  quantity               Int                  @db.UnsignedInt
+  price_at_purchase      Decimal              @db.Decimal(12, 2)
+  points_earned_per_item Int                  @default(0) @db.UnsignedInt
+  parent_item_id         BigInt?              @db.UnsignedBigInt
+  created_at             DateTime             @default(now())
+  order                  orders               @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
+  product                products             @relation(fields: [product_id], references: [product_id])
+  parent_item            order_items?         @relation("ItemParent", fields: [parent_item_id], references: [order_item_id], onDelete: Cascade)
+  child_items            order_items[]        @relation("ItemParent")
+  modifiers              order_item_modifier[]
+
+  @@index([order_id])
+  @@index([product_id])
+}
+
+model modifier {
+  modifier_id         BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
+  name                String                @db.VarChar(100)
+  extra_price         Decimal               @default(0) @db.Decimal(12, 2)
+  type                ModifierType          @default(add)
+  is_active           Boolean               @default(true)
+  order_item_modifier order_item_modifier[]
+}
+
+model order_item_modifier {
+  order_item_modifier_id BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  order_item_id          BigInt      @db.UnsignedBigInt
+  modifier_id            BigInt      @db.UnsignedBigInt
+  price_added            Decimal     @default(0) @db.Decimal(12, 2)
+  order_item             order_items @relation(fields: [order_item_id], references: [order_item_id], onDelete: Cascade)
+  modifier               modifier    @relation(fields: [modifier_id], references: [modifier_id])
+
+  @@index([order_item_id])
+}
+
+model payment {
+  payment_id       BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  order_id         BigInt        @db.UnsignedBigInt
+  payment_method   PaymentMethod
+  payment_gateway  String?       @db.VarChar(50)
+  transaction_id   String?       @unique @db.VarChar(100)
+  payment_url      String?       @db.Text
+  payment_response Json?
+  status           PaymentStatus @default(pending)
+  amount           Decimal       @db.Decimal(12, 2)
+  created_at       DateTime      @default(now())
+  paid_at          DateTime?
+  expired_at       DateTime?
+  updated_at       DateTime      @updatedAt
+  order            orders        @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
+
+  @@index([order_id])
+  @@index([status])
+  @@index([transaction_id])
+}
+
+model reedem {
+  reedem_id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  product_id       BigInt   @unique @db.UnsignedBigInt
+  point_cost       Int      @db.UnsignedInt
+  is_active        Boolean  @default(true)
+  stock_limit      Int?     @db.UnsignedInt
+  redemption_count Int      @default(0) @db.UnsignedInt
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  product          products @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+
+  @@index([is_active])
+}
+
+model points_history {
+  points_history_id BigInt               @id @default(autoincrement()) @db.UnsignedBigInt
+  member_id         BigInt               @db.UnsignedBigInt
+  order_id          BigInt?              @db.UnsignedBigInt
+  points_change     Int
+  transaction_type  PointTransactionType
+  description       String?              @db.VarChar(255)
+  balance_before    Int                  @db.UnsignedInt
+  balance_after     Int                  @db.UnsignedInt
+  created_by        BigInt?              @db.UnsignedBigInt
+  created_at        DateTime             @default(now())
+  member            member               @relation(fields: [member_id], references: [member_id], onDelete: Cascade)
+  order             orders?              @relation(fields: [order_id], references: [order_id])
+  staff             staff?               @relation(fields: [created_by], references: [staff_id])
+
+  @@index([member_id])
+  @@index([transaction_type])
+  @@index([created_at])
+}
+
+model shift {
+  shift_id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  staff_id             BigInt   @db.UnsignedBigInt
+  outlet_id            BigInt   @db.UnsignedBigInt
+  start_time           DateTime @default(now())
+  end_time             DateTime?
+  cash_in_hand         Decimal  @default(0) @db.Decimal(12, 2)
+  total_cash_received  Decimal  @default(0) @db.Decimal(12, 2)
+  total_cash_out       Decimal  @default(0) @db.Decimal(12, 2)
+  final_cash           Decimal  @default(0) @db.Decimal(12, 2)
+  staff                staff    @relation(fields: [staff_id], references: [staff_id])
+  outlet               outlet   @relation(fields: [outlet_id], references: [outlet_id])
+
+  @@index([staff_id])
+}
+
+model favorite {
+  favorite_id BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  staff_id    BigInt   @db.UnsignedBigInt
+  product_id  BigInt   @db.UnsignedBigInt
+  created_at  DateTime @default(now())
+  staff       staff    @relation(fields: [staff_id], references: [staff_id], onDelete: Cascade)
+  product     products @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+
+  @@unique([staff_id, product_id])
+}

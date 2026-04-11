@@ -1,0 +1,3449 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Member registered successfully"
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        },
+        "summary": "Register a new member",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "summary": "Member login",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/staff-login": {
+      "post": {
+        "operationId": "AuthController_staffLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Staff login successful"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "summary": "Staff login",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refreshToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens refreshed successfully"
+          },
+          "401": {
+            "description": "Invalid refresh token"
+          }
+        },
+        "summary": "Refresh access token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "operationId": "ProductsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "category_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by category ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by product name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "is_available",
+            "required": false,
+            "in": "query",
+            "description": "Filter by availability",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Sort by field",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "base_price",
+                "earning_points",
+                "created_at"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of products returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all products with filtering and pagination",
+        "tags": [
+          "products"
+        ]
+      },
+      "post": {
+        "operationId": "ProductsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new product",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/products/{id}": {
+      "get": {
+        "operationId": "ProductsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a product by ID",
+        "tags": [
+          "products"
+        ]
+      },
+      "patch": {
+        "operationId": "ProductsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a product",
+        "tags": [
+          "products"
+        ]
+      },
+      "delete": {
+        "operationId": "ProductsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Product deleted successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a product",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/v1/categories": {
+      "get": {
+        "operationId": "CategoriesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of categories returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all categories",
+        "tags": [
+          "categories"
+        ]
+      },
+      "post": {
+        "operationId": "CategoriesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Category created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new category",
+        "tags": [
+          "categories"
+        ]
+      }
+    },
+    "/api/v1/categories/{id}": {
+      "get": {
+        "operationId": "CategoriesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a category by ID",
+        "tags": [
+          "categories"
+        ]
+      },
+      "patch": {
+        "operationId": "CategoriesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Category updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a category",
+        "tags": [
+          "categories"
+        ]
+      },
+      "delete": {
+        "operationId": "CategoriesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Category deleted successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a category",
+        "tags": [
+          "categories"
+        ]
+      }
+    },
+    "/api/v1/modifiers": {
+      "get": {
+        "operationId": "ModifiersController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of modifiers returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all modifiers",
+        "tags": [
+          "modifiers"
+        ]
+      },
+      "post": {
+        "operationId": "ModifiersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateModifierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Modifier created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new modifier",
+        "tags": [
+          "modifiers"
+        ]
+      }
+    },
+    "/api/v1/modifiers/{id}": {
+      "patch": {
+        "operationId": "ModifiersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateModifierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Modifier updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a modifier",
+        "tags": [
+          "modifiers"
+        ]
+      },
+      "delete": {
+        "operationId": "ModifiersController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Modifier deleted successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a modifier",
+        "tags": [
+          "modifiers"
+        ]
+      }
+    },
+    "/api/v1/outlets": {
+      "get": {
+        "operationId": "OutletsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by outlet status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "maintenance"
+              ]
+            }
+          },
+          {
+            "name": "lat",
+            "required": false,
+            "in": "query",
+            "description": "Latitude for distance sorting",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "required": false,
+            "in": "query",
+            "description": "Longitude for distance sorting",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of outlets returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all outlets with filtering and pagination",
+        "tags": [
+          "outlets"
+        ]
+      },
+      "post": {
+        "operationId": "OutletsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOutletDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Outlet created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new outlet",
+        "tags": [
+          "outlets"
+        ]
+      }
+    },
+    "/api/v1/outlets/{id}": {
+      "get": {
+        "operationId": "OutletsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Outlet returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an outlet by ID",
+        "tags": [
+          "outlets"
+        ]
+      },
+      "patch": {
+        "operationId": "OutletsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOutletDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Outlet updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an outlet",
+        "tags": [
+          "outlets"
+        ]
+      },
+      "delete": {
+        "operationId": "OutletsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Outlet deleted successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an outlet",
+        "tags": [
+          "outlets"
+        ]
+      }
+    },
+    "/api/v1/orders": {
+      "post": {
+        "operationId": "OrdersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new order",
+        "tags": [
+          "orders"
+        ]
+      },
+      "get": {
+        "operationId": "OrdersController_findMyOrders",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by order status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "paid",
+                "preparing",
+                "ready_for_pickup",
+                "completed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "source",
+            "required": false,
+            "in": "query",
+            "description": "Filter by order source",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Mobile App",
+                "POS - In-Store",
+                "POS - GoFood",
+                "POS - GrabFood",
+                "POS - ShopeeFood",
+                "Admin Dashboard",
+                "Kiosk"
+              ]
+            }
+          },
+          {
+            "name": "order_type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by order type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "dine-in",
+                "takeaway",
+                "click-collect"
+              ]
+            }
+          },
+          {
+            "name": "date_from",
+            "required": false,
+            "in": "query",
+            "description": "Filter from date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date_to",
+            "required": false,
+            "in": "query",
+            "description": "Filter to date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of member orders returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get own orders (member only)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/orders/admin": {
+      "get": {
+        "operationId": "OrdersController_findAllAdmin",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by order status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "paid",
+                "preparing",
+                "ready_for_pickup",
+                "completed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "source",
+            "required": false,
+            "in": "query",
+            "description": "Filter by order source",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Mobile App",
+                "POS - In-Store",
+                "POS - GoFood",
+                "POS - GrabFood",
+                "POS - ShopeeFood",
+                "Admin Dashboard",
+                "Kiosk"
+              ]
+            }
+          },
+          {
+            "name": "order_type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by order type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "dine-in",
+                "takeaway",
+                "click-collect"
+              ]
+            }
+          },
+          {
+            "name": "date_from",
+            "required": false,
+            "in": "query",
+            "description": "Filter from date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date_to",
+            "required": false,
+            "in": "query",
+            "description": "Filter to date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of orders returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all orders (admin/manager/cashier)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/orders/{id}": {
+      "get": {
+        "operationId": "OrdersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an order by ID",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/orders/{id}/status": {
+      "patch": {
+        "operationId": "OrdersController_updateStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrderStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order status updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update order status",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/payments": {
+      "post": {
+        "operationId": "PaymentController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a payment for an order",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/v1/payments/{orderId}": {
+      "get": {
+        "operationId": "PaymentController_findByOrder",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment details returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get payment details by order ID",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/v1/loyalty/me": {
+      "get": {
+        "operationId": "LoyaltyController_getMySummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Loyalty summary returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get loyalty summary for current member",
+        "tags": [
+          "loyalty"
+        ]
+      }
+    },
+    "/api/v1/loyalty/me/points-history": {
+      "get": {
+        "operationId": "LoyaltyController_getMyPointsHistory",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "transaction_type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by transaction type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "earned",
+                "redeemed",
+                "expired",
+                "adjusted",
+                "refunded",
+                "bonus"
+              ]
+            }
+          },
+          {
+            "name": "date_from",
+            "required": false,
+            "in": "query",
+            "description": "Filter from date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date_to",
+            "required": false,
+            "in": "query",
+            "description": "Filter to date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Points history returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get points history for current member",
+        "tags": [
+          "loyalty"
+        ]
+      }
+    },
+    "/api/v1/redeem": {
+      "get": {
+        "operationId": "RedeemController_findAvailableRewards",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Available rewards returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get available rewards for current member",
+        "tags": [
+          "redeem"
+        ]
+      }
+    },
+    "/api/v1/redeem/{id}": {
+      "post": {
+        "operationId": "RedeemController_redeem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemRewardDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reward redeemed successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Redeem a reward",
+        "tags": [
+          "redeem"
+        ]
+      }
+    },
+    "/api/v1/members/me": {
+      "get": {
+        "operationId": "MembersController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Member profile returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current member profile",
+        "tags": [
+          "members"
+        ]
+      },
+      "patch": {
+        "operationId": "MembersController_updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member profile updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update current member profile",
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/v1/members": {
+      "get": {
+        "operationId": "MembersController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by name or phone",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tier",
+            "required": false,
+            "in": "query",
+            "description": "Filter by member tier",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Bronze",
+                "Silver",
+                "Gold",
+                "Platinum"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of members returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all members (admin/manager)",
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/v1/members/{id}": {
+      "get": {
+        "operationId": "MembersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a member by ID (admin/manager)",
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/v1/customers": {
+      "get": {
+        "operationId": "CustomersController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of customers returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all customers",
+        "tags": [
+          "customers"
+        ]
+      }
+    },
+    "/api/v1/favorites": {
+      "get": {
+        "operationId": "FavoritesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of favorites returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all favorites for current user",
+        "tags": [
+          "favorites"
+        ]
+      },
+      "post": {
+        "operationId": "FavoritesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFavoriteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Favorite added successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a product to favorites",
+        "tags": [
+          "favorites"
+        ]
+      }
+    },
+    "/api/v1/favorites/{id}": {
+      "delete": {
+        "operationId": "FavoritesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Favorite removed successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a product from favorites",
+        "tags": [
+          "favorites"
+        ]
+      }
+    },
+    "/api/v1/staff": {
+      "get": {
+        "operationId": "StaffController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of staff returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all staff members",
+        "tags": [
+          "staff"
+        ]
+      },
+      "post": {
+        "operationId": "StaffController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Staff member created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new staff member",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}": {
+      "get": {
+        "operationId": "StaffController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Staff member returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a staff member by ID",
+        "tags": [
+          "staff"
+        ]
+      },
+      "patch": {
+        "operationId": "StaffController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Staff member updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a staff member",
+        "tags": [
+          "staff"
+        ]
+      },
+      "delete": {
+        "operationId": "StaffController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Staff member deleted successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a staff member",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/discounts": {
+      "get": {
+        "operationId": "DiscountsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of discounts returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all discounts",
+        "tags": [
+          "discounts"
+        ]
+      },
+      "post": {
+        "operationId": "DiscountsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDiscountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Discount created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new discount",
+        "tags": [
+          "discounts"
+        ]
+      }
+    },
+    "/api/v1/discounts/{id}": {
+      "get": {
+        "operationId": "DiscountsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Discount returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a discount by ID",
+        "tags": [
+          "discounts"
+        ]
+      },
+      "patch": {
+        "operationId": "DiscountsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDiscountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Discount updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a discount",
+        "tags": [
+          "discounts"
+        ]
+      },
+      "delete": {
+        "operationId": "DiscountsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Discount deleted successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a discount",
+        "tags": [
+          "discounts"
+        ]
+      }
+    },
+    "/api/v1/discounts/validate": {
+      "post": {
+        "operationId": "DiscountsController_validate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateDiscountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Discount validation result returned"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Validate a discount code",
+        "tags": [
+          "discounts"
+        ]
+      }
+    },
+    "/api/v1/taxes": {
+      "get": {
+        "operationId": "TaxController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of taxes returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all taxes",
+        "tags": [
+          "taxes"
+        ]
+      },
+      "post": {
+        "operationId": "TaxController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaxDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tax created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new tax",
+        "tags": [
+          "taxes"
+        ]
+      }
+    },
+    "/api/v1/taxes/{id}": {
+      "patch": {
+        "operationId": "TaxController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaxDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tax updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a tax",
+        "tags": [
+          "taxes"
+        ]
+      },
+      "delete": {
+        "operationId": "TaxController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tax deleted successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a tax",
+        "tags": [
+          "taxes"
+        ]
+      }
+    },
+    "/api/v1/service-charges": {
+      "get": {
+        "operationId": "ServiceChargeController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of service charges returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all service charges",
+        "tags": [
+          "service-charges"
+        ]
+      },
+      "post": {
+        "operationId": "ServiceChargeController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceChargeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Service charge created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new service charge",
+        "tags": [
+          "service-charges"
+        ]
+      }
+    },
+    "/api/v1/service-charges/{id}": {
+      "patch": {
+        "operationId": "ServiceChargeController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServiceChargeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service charge updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a service charge",
+        "tags": [
+          "service-charges"
+        ]
+      },
+      "delete": {
+        "operationId": "ServiceChargeController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Service charge deleted successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a service charge",
+        "tags": [
+          "service-charges"
+        ]
+      }
+    },
+    "/api/v1/shifts/start": {
+      "post": {
+        "operationId": "ShiftsController_start",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartShiftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Shift started successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a new shift",
+        "tags": [
+          "shifts"
+        ]
+      }
+    },
+    "/api/v1/shifts/{id}/end": {
+      "patch": {
+        "operationId": "ShiftsController_end",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndShiftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Shift ended successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End an active shift",
+        "tags": [
+          "shifts"
+        ]
+      }
+    },
+    "/api/v1/shifts": {
+      "get": {
+        "operationId": "ShiftsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of shifts returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all shifts",
+        "tags": [
+          "shifts"
+        ]
+      }
+    },
+    "/api/v1/analytics/sales-by-source": {
+      "get": {
+        "operationId": "AnalyticsController_getSalesBySource",
+        "parameters": [
+          {
+            "name": "date_from",
+            "required": false,
+            "in": "query",
+            "description": "Start date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date_to",
+            "required": false,
+            "in": "query",
+            "description": "End date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "outlet_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by outlet ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "category_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by category ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "tier",
+            "required": false,
+            "in": "query",
+            "description": "Filter by member tier",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Bronze",
+                "Silver",
+                "Gold",
+                "Platinum"
+              ]
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Sort by field",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Limit results",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sales by source data returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get sales analytics grouped by order source",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/analytics/product-performance": {
+      "get": {
+        "operationId": "AnalyticsController_getProductPerformance",
+        "parameters": [
+          {
+            "name": "date_from",
+            "required": false,
+            "in": "query",
+            "description": "Start date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date_to",
+            "required": false,
+            "in": "query",
+            "description": "End date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "outlet_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by outlet ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "category_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by category ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "tier",
+            "required": false,
+            "in": "query",
+            "description": "Filter by member tier",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Bronze",
+                "Silver",
+                "Gold",
+                "Platinum"
+              ]
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Sort by field",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Limit results",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product performance data returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get product performance analytics",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/analytics/member-loyalty": {
+      "get": {
+        "operationId": "AnalyticsController_getMemberLoyalty",
+        "parameters": [
+          {
+            "name": "date_from",
+            "required": false,
+            "in": "query",
+            "description": "Start date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date_to",
+            "required": false,
+            "in": "query",
+            "description": "End date (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "outlet_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by outlet ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "category_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter by category ID",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "tier",
+            "required": false,
+            "in": "query",
+            "description": "Filter by member tier",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Bronze",
+                "Silver",
+                "Gold",
+                "Platinum"
+              ]
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Sort by field",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Limit results",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member loyalty data returned successfully"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get member loyalty analytics",
+        "tags": [
+          "analytics"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Toko Kopi Jaya API",
+    "description": "API documentation for Toko Kopi Jaya CRM and Ordering System",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "access-token": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "name": "Authorization",
+        "description": "Enter JWT token",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "password123",
+            "minLength": 8
+          },
+          "phone_number": {
+            "type": "string",
+            "example": "08123456789"
+          },
+          "birthday": {
+            "type": "string",
+            "example": "1995-06-15"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "password123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "StaffLoginDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "admin"
+          },
+          "password": {
+            "type": "string",
+            "example": "password123"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "refresh_token"
+        ]
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Product name",
+            "maxLength": 100
+          },
+          "category_id": {
+            "type": "number",
+            "description": "Category ID"
+          },
+          "description": {
+            "type": "string",
+            "description": "Product description"
+          },
+          "base_price": {
+            "type": "number",
+            "description": "Base price",
+            "minimum": 0
+          },
+          "img_url": {
+            "type": "string",
+            "description": "Image URL"
+          },
+          "earning_points": {
+            "type": "number",
+            "description": "Points earned per purchase",
+            "minimum": 0,
+            "default": 0
+          },
+          "is_available": {
+            "type": "boolean",
+            "description": "Whether product is available",
+            "default": true
+          }
+        },
+        "required": [
+          "name",
+          "category_id",
+          "base_price"
+        ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Product name",
+            "maxLength": 100
+          },
+          "category_id": {
+            "type": "number",
+            "description": "Category ID"
+          },
+          "description": {
+            "type": "string",
+            "description": "Product description"
+          },
+          "base_price": {
+            "type": "number",
+            "description": "Base price",
+            "minimum": 0
+          },
+          "img_url": {
+            "type": "string",
+            "description": "Image URL"
+          },
+          "earning_points": {
+            "type": "number",
+            "description": "Points earned per purchase",
+            "minimum": 0,
+            "default": 0
+          },
+          "is_available": {
+            "type": "boolean",
+            "description": "Whether product is available",
+            "default": true
+          }
+        }
+      },
+      "CreateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Category name",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "Category description"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether category is active"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Category name",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "Category description"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether category is active"
+          }
+        }
+      },
+      "CreateModifierDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Modifier name",
+            "maxLength": 100
+          },
+          "extra_price": {
+            "type": "number",
+            "description": "Extra price for modifier",
+            "minimum": 0,
+            "default": 0
+          },
+          "type": {
+            "type": "string",
+            "description": "Modifier type",
+            "enum": [
+              "add",
+              "remove"
+            ]
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether modifier is active"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ]
+      },
+      "UpdateModifierDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Modifier name",
+            "maxLength": 100
+          },
+          "extra_price": {
+            "type": "number",
+            "description": "Extra price for modifier",
+            "minimum": 0,
+            "default": 0
+          },
+          "type": {
+            "type": "string",
+            "description": "Modifier type",
+            "enum": [
+              "add",
+              "remove"
+            ]
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether modifier is active"
+          }
+        }
+      },
+      "CreateOutletDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Outlet name"
+          },
+          "address": {
+            "type": "string",
+            "description": "Outlet address"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Latitude coordinate"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "Longitude coordinate"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number"
+          },
+          "status": {
+            "type": "string",
+            "description": "Outlet status",
+            "enum": [
+              "active",
+              "inactive",
+              "maintenance"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateOutletDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Outlet name"
+          },
+          "address": {
+            "type": "string",
+            "description": "Outlet address"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Latitude coordinate"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "Longitude coordinate"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number"
+          },
+          "status": {
+            "type": "string",
+            "description": "Outlet status",
+            "enum": [
+              "active",
+              "inactive",
+              "maintenance"
+            ]
+          }
+        }
+      },
+      "CreateOrderItemModifierDto": {
+        "type": "object",
+        "properties": {
+          "modifier_id": {
+            "type": "number",
+            "description": "Modifier ID"
+          }
+        },
+        "required": [
+          "modifier_id"
+        ]
+      },
+      "CreateOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "number",
+            "description": "Product ID"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity",
+            "minimum": 1
+          },
+          "modifiers": {
+            "description": "Item modifiers",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateOrderItemModifierDto"
+            }
+          }
+        },
+        "required": [
+          "product_id",
+          "quantity"
+        ]
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Order items",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateOrderItemDto"
+            }
+          },
+          "outlet_id": {
+            "type": "number",
+            "description": "Outlet ID"
+          },
+          "order_type": {
+            "type": "string",
+            "description": "Order type",
+            "enum": [
+              "dine-in",
+              "takeaway",
+              "click-collect"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "description": "Order source",
+            "enum": [
+              "Mobile App",
+              "POS - In-Store",
+              "POS - GoFood",
+              "POS - GrabFood",
+              "POS - ShopeeFood",
+              "Admin Dashboard",
+              "Kiosk"
+            ]
+          },
+          "table_number": {
+            "type": "string",
+            "description": "Table number for dine-in orders"
+          },
+          "discount_code": {
+            "type": "string",
+            "description": "Discount code to apply"
+          },
+          "tax_id": {
+            "type": "number",
+            "description": "Tax ID to apply"
+          },
+          "service_charge_id": {
+            "type": "number",
+            "description": "Service charge ID to apply"
+          }
+        },
+        "required": [
+          "items",
+          "outlet_id",
+          "order_type"
+        ]
+      },
+      "UpdateOrderStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "New order status",
+            "enum": [
+              "pending",
+              "paid",
+              "preparing",
+              "ready_for_pickup",
+              "completed",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CreatePaymentDto": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "number",
+            "description": "Order ID"
+          },
+          "payment_method": {
+            "type": "string",
+            "description": "Payment method",
+            "enum": [
+              "QRIS",
+              "GoPay",
+              "OVO",
+              "Dana",
+              "ShopeePay",
+              "Cash",
+              "Debit Card",
+              "Credit Card",
+              "Bank Transfer"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "description": "Payment amount",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "order_id",
+          "payment_method",
+          "amount"
+        ]
+      },
+      "RedeemRewardDto": {
+        "type": "object",
+        "properties": {
+          "outlet_id": {
+            "type": "number",
+            "description": "Outlet ID where redemption occurs"
+          },
+          "staff_id": {
+            "type": "number",
+            "description": "Staff ID processing the redemption"
+          }
+        },
+        "required": [
+          "outlet_id",
+          "staff_id"
+        ]
+      },
+      "UpdateMemberDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Member name"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Phone number"
+          },
+          "birthday": {
+            "type": "string",
+            "description": "Birthday (ISO 8601 date string)"
+          },
+          "fav_menu": {
+            "type": "string",
+            "description": "Favorite menu item"
+          }
+        }
+      },
+      "CreateFavoriteDto": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "number",
+            "description": "Product ID to add as favorite"
+          }
+        },
+        "required": [
+          "product_id"
+        ]
+      },
+      "CreateStaffDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Staff name"
+          },
+          "role": {
+            "type": "string",
+            "description": "Staff role",
+            "enum": [
+              "admin",
+              "cashier",
+              "manager",
+              "barista"
+            ]
+          },
+          "username": {
+            "type": "string",
+            "description": "Username",
+            "maxLength": 50
+          },
+          "password": {
+            "type": "string",
+            "description": "Password",
+            "minLength": 8
+          },
+          "outlet_id": {
+            "type": "number",
+            "description": "Outlet ID"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether staff is active"
+          }
+        },
+        "required": [
+          "name",
+          "role",
+          "username",
+          "password"
+        ]
+      },
+      "UpdateStaffDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Staff name"
+          },
+          "role": {
+            "type": "string",
+            "description": "Staff role",
+            "enum": [
+              "admin",
+              "cashier",
+              "manager",
+              "barista"
+            ]
+          },
+          "username": {
+            "type": "string",
+            "description": "Username",
+            "maxLength": 50
+          },
+          "password": {
+            "type": "string",
+            "description": "Password",
+            "minLength": 8
+          },
+          "outlet_id": {
+            "type": "number",
+            "description": "Outlet ID"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether staff is active"
+          }
+        }
+      },
+      "CreateDiscountDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Discount name"
+          },
+          "code": {
+            "type": "string",
+            "description": "Discount code"
+          },
+          "type": {
+            "type": "string",
+            "description": "Discount type",
+            "enum": [
+              "nominal",
+              "percentage"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "description": "Discount value",
+            "minimum": 0
+          },
+          "min_purchase": {
+            "type": "number",
+            "description": "Minimum purchase amount"
+          },
+          "max_discount": {
+            "type": "number",
+            "description": "Maximum discount amount"
+          },
+          "usage_limit": {
+            "type": "number",
+            "description": "Usage limit"
+          },
+          "valid_from": {
+            "type": "string",
+            "description": "Valid from date (ISO 8601)"
+          },
+          "valid_until": {
+            "type": "string",
+            "description": "Valid until date (ISO 8601)"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether discount is active"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "value"
+        ]
+      },
+      "UpdateDiscountDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Discount name"
+          },
+          "code": {
+            "type": "string",
+            "description": "Discount code"
+          },
+          "type": {
+            "type": "string",
+            "description": "Discount type",
+            "enum": [
+              "nominal",
+              "percentage"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "description": "Discount value",
+            "minimum": 0
+          },
+          "min_purchase": {
+            "type": "number",
+            "description": "Minimum purchase amount"
+          },
+          "max_discount": {
+            "type": "number",
+            "description": "Maximum discount amount"
+          },
+          "usage_limit": {
+            "type": "number",
+            "description": "Usage limit"
+          },
+          "valid_from": {
+            "type": "string",
+            "description": "Valid from date (ISO 8601)"
+          },
+          "valid_until": {
+            "type": "string",
+            "description": "Valid until date (ISO 8601)"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether discount is active"
+          }
+        }
+      },
+      "ValidateDiscountDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Discount code"
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Order subtotal",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "code",
+          "subtotal"
+        ]
+      },
+      "CreateTaxDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tax name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tax type",
+            "enum": [
+              "nominal",
+              "percentage"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "description": "Tax value"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether tax is active"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "value"
+        ]
+      },
+      "UpdateTaxDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tax name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tax type",
+            "enum": [
+              "nominal",
+              "percentage"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "description": "Tax value"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether tax is active"
+          }
+        }
+      },
+      "CreateServiceChargeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Service charge name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Charge type",
+            "enum": [
+              "nominal",
+              "percentage"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "description": "Charge value"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether service charge is active"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "value"
+        ]
+      },
+      "UpdateServiceChargeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Service charge name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Charge type",
+            "enum": [
+              "nominal",
+              "percentage"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "description": "Charge value"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether service charge is active"
+          }
+        }
+      },
+      "StartShiftDto": {
+        "type": "object",
+        "properties": {
+          "cash_in_hand": {
+            "type": "number",
+            "description": "Starting cash in hand",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "cash_in_hand"
+        ]
+      },
+      "EndShiftDto": {
+        "type": "object",
+        "properties": {
+          "total_cash_received": {
+            "type": "number",
+            "description": "Total cash received during shift"
+          },
+          "total_cash_out": {
+            "type": "number",
+            "description": "Total cash out during shift"
+          },
+          "final_cash": {
+            "type": "number",
+            "description": "Final cash amount"
+          }
+        },
+        "required": [
+          "total_cash_received",
+          "total_cash_out",
+          "final_cash"
+        ]
+      }
+    }
+  }
+}
