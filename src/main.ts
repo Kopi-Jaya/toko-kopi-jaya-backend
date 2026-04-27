@@ -60,9 +60,11 @@ async function bootstrap() {
     },
   });
 
-  // Start
+  // Start — bind explicitly to 0.0.0.0 so the Android emulator's
+  // 10.0.2.2 (IPv4) can reach us. Node's default on Windows binds
+  // to '::' (IPv6 only), which the emulator cannot translate to.
   const port = configService.get<number>('PORT', 3000);
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`Application running on: http://localhost:${port}`);
   console.log(`Swagger docs available at: http://localhost:${port}/api/docs`);
 }
