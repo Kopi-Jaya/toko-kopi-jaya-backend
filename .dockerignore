@@ -1,0 +1,41 @@
+# Source control
+.git
+.gitignore
+.gitattributes
+
+# Local builds & deps (rebuilt inside the image)
+node_modules
+dist
+coverage
+*.tsbuildinfo
+
+# Environment files — never bake secrets into the image
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Tooling
+.eslintcache
+.prettierrc
+eslint.config.mjs
+
+# Tests are not needed at runtime
+test
+
+# Local docs / private notes
+.claude
+CREDENTIALS.md
+MANUAL.md
+
+# Logs
+*.log
+npm-debug.log*
+
+# Repo-local Dokploy / docker config (re-add if you want it inside the image)
+docker-compose*.yml
