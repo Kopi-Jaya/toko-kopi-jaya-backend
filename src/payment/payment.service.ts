@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { Payment } from './entities/payment.entity';
 import { Order } from '../orders/entities/order.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-import { OrderStatus, PaymentStatus } from '../common/enums';
+import { OrderStatus, PaymentMethod, PaymentStatus } from '../common/enums';
 
 @Injectable()
 export class PaymentService {
@@ -42,14 +42,31 @@ export class PaymentService {
       throw new BadRequestException('A payment already exists for this order');
     }
 
+    // Cash is settled at the till, not via an external gateway, so it short-
+    // circuits straight to SUCCESS. Per the order spec, this also advances
+    // the order to PAID, which fires trg_credit_points_after_payment and
+    // unblocks the preparing → ready_for_pickup → completed transitions.
+    const isCash = dto.payment_method === PaymentMethod.CASH;
+    const now = new Date();
+
     const payment = this.paymentRepository.create({
       order_id: dto.order_id,
       payment_method: dto.payment_method,
       amount: dto.amount,
-      status: PaymentStatus.PENDING,
+      status: isCash ? PaymentStatus.SUCCESS : PaymentStatus.PENDING,
+      paid_at: isCash ? now : null,
     });
 
-    return this.paymentRepository.save(payment);
+    const saved = await this.paymentRepository.save(payment);
+
+    if (isCash) {
+      await this.orderRepository.update(dto.order_id, {
+        status: OrderStatus.PAID,
+        paid_at: now,
+      });
+    }
+
+    return saved;
   }
 
   async findByOrderId(orderId: number): Promise<Payment> {
