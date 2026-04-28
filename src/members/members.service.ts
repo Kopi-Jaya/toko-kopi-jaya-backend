@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { instanceToPlain } from 'class-transformer';
 import { Member } from './entities/member.entity';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { AdminUpdateMemberDto } from './dto/admin-update-member.dto';
@@ -90,8 +91,11 @@ export class MembersService {
       throw new NotFoundException(`Member with ID ${id} not found`);
     }
 
+    // instanceToPlain honors @Exclude() on Member.password; without it,
+    // the spread below would copy `password` as a plain key and the
+    // global ClassSerializerInterceptor can't recover (M-002 / DEFECT-002).
     return {
-      ...member,
+      ...instanceToPlain(member),
       points_summary: {
         current_points: member.current_points,
         lifetime_points_earned: member.lifetime_points_earned,
