@@ -1,4 +1,5 @@
-import { NestFactory } from '@nestjs/core';
+import { ClassSerializerInterceptor } from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
@@ -30,10 +31,23 @@ async function bootstrap() {
   // Helmet
   app.use(helmet());
 
-  // Global pipes, filters, interceptors
+  // Global pipes, filters, interceptors.
+  //
+  // Interceptor order matters: the LAST one registered runs closest to the
+  // controller. So at response time the chain is:
+  //   handler -> TransformInterceptor (wraps entity in { data }) ->
+  //   ClassSerializerInterceptor (instanceToPlain on the wrapped result;
+  //   recursively strips @Exclude()-marked fields like Member.password
+  //   and Staff.password before JSON serialization).
+  // Without ClassSerializerInterceptor the @Exclude decorators on the
+  // password columns are inert and the bcrypt hash leaks in responses
+  // (M-002 / DEFECT-002).
   app.useGlobalPipes(appValidationPipe);
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalInterceptors(
+    new ClassSerializerInterceptor(app.get(Reflector)),
+    new TransformInterceptor(),
+  );
 
   // Swagger
   const swaggerConfig = new DocumentBuilder()
