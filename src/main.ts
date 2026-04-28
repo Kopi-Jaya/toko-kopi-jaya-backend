@@ -33,20 +33,24 @@ async function bootstrap() {
 
   // Global pipes, filters, interceptors.
   //
-  // Interceptor order matters: the LAST one registered runs closest to the
-  // controller. So at response time the chain is:
-  //   handler -> TransformInterceptor (wraps entity in { data }) ->
-  //   ClassSerializerInterceptor (instanceToPlain on the wrapped result;
-  //   recursively strips @Exclude()-marked fields like Member.password
-  //   and Staff.password before JSON serialization).
-  // Without ClassSerializerInterceptor the @Exclude decorators on the
-  // password columns are inert and the bcrypt hash leaks in responses
-  // (M-002 / DEFECT-002).
+  // Interceptor order matters. With useGlobalInterceptors([A, B]) the
+  // response pipeline runs A's map() LAST (outermost) and B's map()
+  // FIRST (innermost, closest to the controller).
+  //
+  // We need ClassSerializerInterceptor to see the raw Member/Staff
+  // instance before TransformInterceptor wraps it in { data: ... }.
+  // If TransformInterceptor runs first, ClassSerializerInterceptor
+  // only sees a plain `{ data: <entity> }` wrapper and doesn't recurse
+  // into `data`, so @Exclude()'d fields (like Member.password) leak
+  // through into the JSON response (M-002 / DEFECT-002).
+  //
+  // Order therefore: TransformInterceptor outer, ClassSerializerInterceptor
+  // inner -> entity is serialized first (password stripped), THEN wrapped.
   app.useGlobalPipes(appValidationPipe);
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(
-    new ClassSerializerInterceptor(app.get(Reflector)),
     new TransformInterceptor(),
+    new ClassSerializerInterceptor(app.get(Reflector)),
   );
 
   // Swagger
