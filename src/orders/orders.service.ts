@@ -4,8 +4,9 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, EntityManager } from 'typeorm';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { OrderItemModifier } from './entities/order-item-modifier.entity';
@@ -15,6 +16,9 @@ import { Outlet } from '../outlets/entities/outlet.entity';
 import { Discount } from '../discounts/entities/discount.entity';
 import { Tax } from '../tax/entities/tax.entity';
 import { ServiceCharge } from '../service-charge/entities/service-charge.entity';
+import { Member } from '../members/entities/member.entity';
+import { Customer } from '../customers/entities/customer.entity';
+import { Staff } from '../staff/entities/staff.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -51,7 +55,10 @@ export class OrdersService {
     private readonly taxRepository: Repository<Tax>,
     @InjectRepository(ServiceCharge)
     private readonly serviceChargeRepository: Repository<ServiceCharge>,
+    @InjectRepository(Member)
+    private readonly memberRepository: Repository<Member>,
     private readonly dataSource: DataSource,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(dto: CreateOrderDto, user: any): Promise<Order> {
@@ -218,14 +225,25 @@ export class OrdersService {
         isUnique = !existing;
       } while (!isUnique);
 
-      // 10. Determine user context
-      const staffId = user.type === 'staff' ? user.sub : null;
-      const memberId = user.type === 'member' ? user.sub : null;
+      // 10. Determine staff_id / member_id / customer_id.
+      //
+      // The schema requires:
+      //   - staff_id NOT NULL  (every order has an attributable cashier/agent)
+      //   - exactly ONE of (member_id, customer_id) set (CHECK constraint)
+      //
+      // Without this resolver, member-placed mobile orders crashed with
+      // "Column 'staff_id' cannot be null" (M-013 / DEFECT-001) and
+      // staff walk-ins crashed the CHECK constraint when both ids were null.
+      const { memberId, customerId, staffId } = await this.resolveOrderActors(
+        dto,
+        user,
+        queryRunner.manager,
+      );
 
       // 11. Create order
       const order = queryRunner.manager.create(Order, {
         member_id: memberId,
-        customer_id: null,
+        customer_id: customerId,
         staff_id: staffId,
         outlet_id: dto.outlet_id,
         source: dto.source ?? OrderSource.POS_IN_STORE,
@@ -463,5 +481,82 @@ export class OrdersService {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return code;
+  }
+
+  /**
+   * Resolves the (member_id, customer_id, staff_id) tuple for a new order
+   * given the JWT and the request DTO, satisfying both the staff_id NOT NULL
+   * column and the CHECK(member_id XOR customer_id) constraint.
+   *
+   * Mobile-app member orders are attributed to a configurable service-account
+   * staff (env: MOBILE_APP_STAFF_ID, default 1). Staff walk-ins either reuse
+   * an existing customer (matched by phone) or create a new one.
+   */
+  private async resolveOrderActors(
+    dto: CreateOrderDto,
+    user: { type: 'member' | 'staff'; sub: number },
+    manager: EntityManager,
+  ): Promise<{
+    memberId: number | null;
+    customerId: number | null;
+    staffId: number;
+  }> {
+    if (user.type === 'member') {
+      // Mobile / web member checkout. The bearer is the customer; we still
+      // need an attributable staff row because staff_id is NOT NULL.
+      const fallbackStaffId = parseInt(
+        this.configService.get<string>('MOBILE_APP_STAFF_ID', '1'),
+        10,
+      );
+      const serviceStaff = await manager.findOne(Staff, {
+        where: { staff_id: fallbackStaffId },
+      });
+      if (!serviceStaff) {
+        throw new UnprocessableEntityException(
+          `Mobile-app service staff (id=${fallbackStaffId}) is missing. Set MOBILE_APP_STAFF_ID to a valid staff_id or seed a service account.`,
+        );
+      }
+      return {
+        memberId: user.sub,
+        customerId: null,
+        staffId: fallbackStaffId,
+      };
+    }
+
+    // user.type === 'staff' — POS / Admin Dashboard order entry.
+    const staffId = user.sub;
+
+    if (dto.member_id != null) {
+      // Staff is registering an existing member's purchase at the till.
+      const member = await manager.findOne(Member, {
+        where: { member_id: dto.member_id },
+      });
+      if (!member) {
+        throw new NotFoundException(
+          `Member with ID ${dto.member_id} not found`,
+        );
+      }
+      return { memberId: member.member_id, customerId: null, staffId };
+    }
+
+    // Anonymous walk-in. Match by phone if supplied, otherwise create.
+    const walkInName = dto.customer_name?.trim() || 'Walk-in Customer';
+    const walkInPhone = dto.customer_phone?.trim() || null;
+
+    let customer: Customer | null = null;
+    if (walkInPhone) {
+      customer = await manager.findOne(Customer, {
+        where: { phone_number: walkInPhone },
+      });
+    }
+    if (!customer) {
+      customer = manager.create(Customer, {
+        name: walkInName,
+        phone_number: walkInPhone,
+      });
+      customer = await manager.save(Customer, customer);
+    }
+
+    return { memberId: null, customerId: customer.customer_id, staffId };
   }
 }

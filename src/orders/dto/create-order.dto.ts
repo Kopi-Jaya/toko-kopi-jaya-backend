@@ -74,4 +74,44 @@ export class CreateOrderDto {
   @IsOptional()
   @IsNumber()
   service_charge_id?: number;
+
+  // ─── Staff-placed walk-in / member-attribution fields ──────────────────
+  // Used only when the request comes from a staff JWT. Ignored on member
+  // requests (which always attribute the order to the JWT's member_id).
+  //
+  // Resolution rules in OrdersService.create:
+  //   1. Member JWT          → member_id = JWT.sub, customer_id = null,
+  //                            staff_id = MOBILE_APP_STAFF_ID env var.
+  //   2. Staff JWT + member_id → existing-member purchase at the till.
+  //                              member_id = dto.member_id, customer_id = null.
+  //   3. Staff JWT + customer_name → anonymous walk-in. customer row is
+  //                                  created (or matched by phone) and
+  //                                  customer_id is set.
+  //   4. Staff JWT + neither → falls back to (3) with a "Walk-in" name.
+
+  @ApiPropertyOptional({
+    description:
+      'Staff-only: register the order against an existing member. Mutually exclusive with customer_name.',
+  })
+  @IsOptional()
+  @IsNumber()
+  member_id?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Staff-only: walk-in customer name. A customer row is created (or matched by phone) and attached.',
+    maxLength: 100,
+  })
+  @IsOptional()
+  @IsString()
+  customer_name?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Staff-only: walk-in customer phone. Used to deduplicate against existing customer records.',
+    maxLength: 20,
+  })
+  @IsOptional()
+  @IsString()
+  customer_phone?: string;
 }

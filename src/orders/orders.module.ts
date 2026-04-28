@@ -9,8 +9,10 @@ import { Outlet } from '../outlets/entities/outlet.entity';
 import { Discount } from '../discounts/entities/discount.entity';
 import { Tax } from '../tax/entities/tax.entity';
 import { ServiceCharge } from '../service-charge/entities/service-charge.entity';
+import { Member } from '../members/entities/member.entity';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
+import { CustomersModule } from '../customers/customers.module';
 
 @Module({
   imports: [
@@ -24,7 +26,9 @@ import { OrdersService } from './orders.service';
       Discount,
       Tax,
       ServiceCharge,
+      Member,
     ]),
+    CustomersModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService],
