@@ -1,16 +1,27 @@
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import { existsSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { appValidationPipe } from './common/pipes/validation.pipe';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
+
+  // Static asset serving for product images. The directory is mounted to a
+  // host volume in Dokploy so uploads survive redeploys (see Dokploy app
+  // config — /app/uploads → host volume).
+  const uploadsRoot =
+    configService.get<string>('UPLOADS_DIR') ?? join(process.cwd(), 'uploads');
+  if (!existsSync(uploadsRoot)) mkdirSync(uploadsRoot, { recursive: true });
+  app.useStaticAssets(uploadsRoot, { prefix: '/uploads/' });
 
   // Global prefix
   app.setGlobalPrefix('api/v1');

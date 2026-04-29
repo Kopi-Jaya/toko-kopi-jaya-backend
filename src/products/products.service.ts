@@ -1,9 +1,12 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { existsSync, unlinkSync } from 'node:fs';
+import { join } from 'node:path';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -90,5 +93,46 @@ export class ProductsService {
   async remove(id: number): Promise<void> {
     const product = await this.findOne(id);
     await this.productRepository.remove(product);
+  }
+
+  /// Stores the new image URL on the product. Deletes the prior local file
+  /// (if it lived under our uploads directory) so old images don't pile up.
+  async setImage(
+    id: number,
+    publicUrl: string,
+    relativeFilePath: string,
+    uploadsRoot: string,
+  ): Promise<Product> {
+    if (!publicUrl) {
+      throw new BadRequestException('Image upload failed (no file)');
+    }
+    const product = await this.findOne(id);
+    const previous = product.img_url;
+
+    product.img_url = publicUrl;
+    await this.productRepository.save(product);
+
+    // Best-effort cleanup of the previous local file. We only delete files
+    // we know we wrote (i.e. live under the configured uploads root); we
+    // never touch externally-hosted URLs that might be in img_url today.
+    if (previous && previous.includes('/uploads/')) {
+      const previousPath = previous.split('/uploads/').pop();
+      if (previousPath) {
+        const previousAbsolute = join(uploadsRoot, previousPath);
+        if (
+          previousAbsolute.startsWith(uploadsRoot) &&
+          previousAbsolute !== join(uploadsRoot, relativeFilePath) &&
+          existsSync(previousAbsolute)
+        ) {
+          try {
+            unlinkSync(previousAbsolute);
+          } catch (_) {
+            // Soft-fail: not worth bubbling up to the caller.
+          }
+        }
+      }
+    }
+
+    return this.findOne(id);
   }
 }
