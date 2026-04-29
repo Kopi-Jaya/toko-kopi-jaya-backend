@@ -34,7 +34,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Run as non-root
+# su-exec lets the entrypoint chown mounted volumes as root then drop to
+# the unprivileged nestjs user. apk's `--no-cache` keeps the layer slim.
+RUN apk add --no-cache su-exec
+
+# Run as non-root (entrypoint drops to this user via su-exec)
 RUN addgroup -g 1001 -S nodejs \
  && adduser  -S -u 1001 -G nodejs nestjs
 
@@ -43,8 +47,13 @@ COPY --from=builder --chown=nestjs:nodejs /app/node_modules  ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/package.json  ./package.json
 COPY --from=builder --chown=nestjs:nodejs /app/prisma        ./prisma
 
-USER nestjs
+# Pre-create the uploads dir so Docker named-volume init copies these
+# permissions on first mount (defence-in-depth alongside the entrypoint).
+RUN mkdir -p /app/uploads && chown -R nestjs:nodejs /app/uploads
+
+COPY --chmod=0755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 3000
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "dist/main"]
