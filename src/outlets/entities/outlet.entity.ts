@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   OneToMany,
 } from 'typeorm';
 import { OutletStatus } from '../../common/enums';
@@ -39,6 +40,9 @@ export class Outlet {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+  @DeleteDateColumn()
+  deleted_at: Date | null;
 
   @OneToMany(() => Staff, (staff) => staff.outlet)
   staff: Staff[];

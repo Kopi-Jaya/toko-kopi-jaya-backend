@@ -46,7 +46,7 @@ export class ServiceChargeService {
   }
 
   async remove(id: number): Promise<void> {
-    const sc = await this.findOne(id);
-    await this.serviceChargeRepository.remove(sc);
+    await this.findOne(id);
+    await this.serviceChargeRepository.softDelete(id);
   }
 }

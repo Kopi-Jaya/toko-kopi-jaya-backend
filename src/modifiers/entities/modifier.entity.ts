@@ -2,6 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ModifierType } from '../../common/enums';
 
@@ -21,4 +22,7 @@ export class Modifier {
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
+
+  @DeleteDateColumn()
+  deleted_at: Date | null;
 }

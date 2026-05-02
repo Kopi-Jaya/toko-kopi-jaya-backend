@@ -54,7 +54,7 @@ export class ModifiersService {
   }
 
   async remove(id: number): Promise<void> {
-    const modifier = await this.findOne(id);
-    await this.modifierRepository.remove(modifier);
+    await this.findOne(id);
+    await this.modifierRepository.softDelete(id);
   }
 }

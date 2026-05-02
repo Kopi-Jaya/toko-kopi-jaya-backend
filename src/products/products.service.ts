@@ -91,8 +91,8 @@ export class ProductsService {
   }
 
   async remove(id: number): Promise<void> {
-    const product = await this.findOne(id);
-    await this.productRepository.remove(product);
+    await this.findOne(id);
+    await this.productRepository.softDelete(id);
   }
 
   /// Stores the new image URL on the product. Deletes the prior local file

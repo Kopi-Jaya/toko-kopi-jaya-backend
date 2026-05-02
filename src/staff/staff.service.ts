@@ -107,7 +107,7 @@ export class StaffService {
   }
 
   async remove(id: number): Promise<void> {
-    const staff = await this.findOne(id);
-    await this.staffRepository.remove(staff);
+    await this.findOne(id);
+    await this.staffRepository.softDelete(id);
   }
 }

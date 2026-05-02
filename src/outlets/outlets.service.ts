@@ -78,7 +78,7 @@ export class OutletsService {
   }
 
   async remove(id: number): Promise<void> {
-    const outlet = await this.findOne(id);
-    await this.outletRepository.remove(outlet);
+    await this.findOne(id);
+    await this.outletRepository.softDelete(id);
   }
 }

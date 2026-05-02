@@ -2,6 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ChargeType } from '../../common/enums';
 
@@ -42,4 +43,7 @@ export class Discount {
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
+
+  @DeleteDateColumn()
+  deleted_at: Date | null;
 }

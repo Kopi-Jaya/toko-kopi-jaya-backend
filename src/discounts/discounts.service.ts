@@ -48,8 +48,8 @@ export class DiscountsService {
   }
 
   async remove(id: number): Promise<void> {
-    const discount = await this.findOne(id);
-    await this.discountRepository.remove(discount);
+    await this.findOne(id);
+    await this.discountRepository.softDelete(id);
   }
 
   async validate(dto: ValidateDiscountDto) {

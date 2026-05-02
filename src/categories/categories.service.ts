@@ -1,10 +1,9 @@
 import {
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -49,16 +48,7 @@ export class CategoriesService {
   }
 
   async remove(id: number): Promise<void> {
-    const category = await this.findOne(id);
-    try {
-      await this.categoryRepository.remove(category);
-    } catch (err) {
-      if (err instanceof QueryFailedError && (err as any).errno === 1451) {
-        throw new ConflictException(
-          'Cannot delete this category because it still has products assigned to it. Remove or reassign the products first.',
-        );
-      }
-      throw err;
-    }
+    await this.findOne(id);
+    await this.categoryRepository.softDelete(id);
   }
 }
