@@ -48,7 +48,10 @@ export class CategoriesService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id);
+    const exists = await this.categoryRepository.existsBy({ category_id: id });
+    if (!exists) {
+      throw new NotFoundException(`Category with ID ${id} not found`);
+    }
     await this.categoryRepository.softDelete(id);
   }
 }
