@@ -30,7 +30,7 @@ export class ModifiersService {
     return this.modifierRepository.find({ where });
   }
 
-  async findOne(id: number): Promise<Modifier> {
+  async findOne(id: number): Promise<Modifier & { order_usage_count: number }> {
     const modifier = await this.modifierRepository.findOne({
       where: { modifier_id: id },
     });
@@ -39,7 +39,14 @@ export class ModifiersService {
       throw new NotFoundException(`Modifier with ID ${id} not found`);
     }
 
-    return modifier;
+    const [{ cnt }] = await this.modifierRepository.query(
+      'SELECT COUNT(*) as cnt FROM order_item_modifier WHERE modifier_id = ?',
+      [id],
+    );
+    (modifier as Modifier & { order_usage_count: number }).order_usage_count =
+      parseInt(cnt, 10);
+
+    return modifier as Modifier & { order_usage_count: number };
   }
 
   async create(dto: CreateModifierDto): Promise<Modifier> {
@@ -54,7 +61,8 @@ export class ModifiersService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id);
+    const exists = await this.modifierRepository.existsBy({ modifier_id: id });
+    if (!exists) throw new NotFoundException(`Modifier with ID ${id} not found`);
     await this.modifierRepository.softDelete(id);
   }
 }

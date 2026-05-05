@@ -48,7 +48,8 @@ export class DiscountsService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id);
+    const exists = await this.discountRepository.existsBy({ discount_id: id });
+    if (!exists) throw new NotFoundException(`Discount with ID ${id} not found`);
     await this.discountRepository.softDelete(id);
   }
 

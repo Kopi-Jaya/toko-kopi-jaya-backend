@@ -23,10 +23,11 @@ export class CategoriesService {
   }
 
   async findOne(id: number): Promise<Category> {
-    const category = await this.categoryRepository.findOne({
-      where: { category_id: id },
-      relations: ['products'],
-    });
+    const category = await this.categoryRepository
+      .createQueryBuilder('category')
+      .where('category.category_id = :id', { id })
+      .loadRelationCountAndMap('category.products_count', 'category.products')
+      .getOne();
 
     if (!category) {
       throw new NotFoundException(`Category with ID ${id} not found`);

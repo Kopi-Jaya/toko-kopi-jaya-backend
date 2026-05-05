@@ -65,10 +65,12 @@ export class ProductsService {
   }
 
   async findOne(id: number): Promise<Product> {
-    const product = await this.productRepository.findOne({
-      where: { product_id: id },
-      relations: ['category'],
-    });
+    const product = await this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .where('product.product_id = :id', { id })
+      .loadRelationCountAndMap('product.order_items_count', 'product.order_items')
+      .getOne();
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -91,7 +93,8 @@ export class ProductsService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id);
+    const exists = await this.productRepository.existsBy({ product_id: id });
+    if (!exists) throw new NotFoundException(`Product with ID ${id} not found`);
     await this.productRepository.softDelete(id);
   }
 

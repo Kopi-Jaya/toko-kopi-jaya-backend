@@ -55,9 +55,12 @@ export class OutletsService {
   }
 
   async findOne(id: number): Promise<Outlet> {
-    const outlet = await this.outletRepository.findOne({
-      where: { outlet_id: id },
-    });
+    const outlet = await this.outletRepository
+      .createQueryBuilder('outlet')
+      .where('outlet.outlet_id = :id', { id })
+      .loadRelationCountAndMap('outlet.staff_count', 'outlet.staff')
+      .loadRelationCountAndMap('outlet.orders_count', 'outlet.orders')
+      .getOne();
 
     if (!outlet) {
       throw new NotFoundException(`Outlet with ID ${id} not found`);
@@ -78,7 +81,8 @@ export class OutletsService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id);
+    const exists = await this.outletRepository.existsBy({ outlet_id: id });
+    if (!exists) throw new NotFoundException(`Outlet with ID ${id} not found`);
     await this.outletRepository.softDelete(id);
   }
 }

@@ -53,10 +53,13 @@ export class StaffService {
   }
 
   async findOne(id: number): Promise<Staff> {
-    const staff = await this.staffRepository.findOne({
-      where: { staff_id: id },
-      relations: ['outlet'],
-    });
+    const staff = await this.staffRepository
+      .createQueryBuilder('staff')
+      .leftJoinAndSelect('staff.outlet', 'outlet')
+      .where('staff.staff_id = :id', { id })
+      .loadRelationCountAndMap('staff.orders_count', 'staff.orders')
+      .loadRelationCountAndMap('staff.shifts_count', 'staff.shifts')
+      .getOne();
 
     if (!staff) {
       throw new NotFoundException(`Staff with ID ${id} not found`);
@@ -107,7 +110,8 @@ export class StaffService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.findOne(id);
+    const exists = await this.staffRepository.existsBy({ staff_id: id });
+    if (!exists) throw new NotFoundException(`Staff with ID ${id} not found`);
     await this.staffRepository.softDelete(id);
   }
 }
