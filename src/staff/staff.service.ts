@@ -19,7 +19,13 @@ export class StaffService {
     private readonly staffRepository: Repository<Staff>,
   ) {}
 
-  async findAll(query: PaginationQueryDto & { role?: StaffRole; outlet_id?: number; is_active?: boolean }) {
+  async findAll(
+    query: PaginationQueryDto & {
+      role?: StaffRole;
+      outlet_id?: number;
+      is_active?: boolean;
+    },
+  ) {
     const { page = 1, limit = 20, role, outlet_id, is_active } = query;
     const skip = (page - 1) * limit;
 
@@ -74,7 +80,9 @@ export class StaffService {
     });
 
     if (existingUsername) {
-      throw new ConflictException(`Username "${dto.username}" is already taken`);
+      throw new ConflictException(
+        `Username "${dto.username}" is already taken`,
+      );
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 12);
@@ -96,7 +104,9 @@ export class StaffService {
         where: { username: dto.username },
       });
       if (existingUsername) {
-        throw new ConflictException(`Username "${dto.username}" is already taken`);
+        throw new ConflictException(
+          `Username "${dto.username}" is already taken`,
+        );
       }
     }
 

@@ -44,9 +44,17 @@ export enum PaymentStatus {
 }
 
 export enum StaffRole {
+  /// Cross-outlet operator. Manages outlets, the master product catalog,
+  /// outlet admins, and sees cross-outlet analytics. Bypasses outlet-scope
+  /// guards entirely (M-125).
+  SUPER_ADMIN = 'super_admin',
+  /// Outlet-scoped operator. Manages their assigned outlet's menu (via
+  /// outlet_products), staff, orders, members, discounts, etc.
   ADMIN = 'admin',
-  CASHIER = 'cashier',
+  /// Outlet-scoped operator with elevated permissions over Cashier/Barista
+  /// (e.g. shift open/close).
   MANAGER = 'manager',
+  CASHIER = 'cashier',
   BARISTA = 'barista',
 }
 

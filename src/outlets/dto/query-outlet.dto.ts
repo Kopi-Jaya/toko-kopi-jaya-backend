@@ -5,7 +5,10 @@ import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { OutletStatus } from '../../common/enums';
 
 export class QueryOutletDto extends PaginationQueryDto {
-  @ApiPropertyOptional({ description: 'Filter by outlet status', enum: OutletStatus })
+  @ApiPropertyOptional({
+    description: 'Filter by outlet status',
+    enum: OutletStatus,
+  })
   @IsOptional()
   @IsEnum(OutletStatus)
   status?: OutletStatus;

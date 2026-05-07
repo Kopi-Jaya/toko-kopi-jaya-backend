@@ -11,7 +11,12 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { OutletsService } from './outlets.service';
 import { CreateOutletDto } from './dto/create-outlet.dto';
 import { UpdateOutletDto } from './dto/update-outlet.dto';
@@ -29,7 +34,10 @@ export class OutletsController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'Get all outlets with filtering and pagination' })
-  @ApiResponse({ status: 200, description: 'List of outlets returned successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of outlets returned successfully',
+  })
   findAll(@Query() query: QueryOutletDto) {
     return this.outletsService.findAll(query);
   }
@@ -42,7 +50,7 @@ export class OutletsController {
     return this.outletsService.findOne(id);
   }
 
-  @Roles(StaffRole.ADMIN)
+  @Roles(StaffRole.SUPER_ADMIN)
   @Post()
   @ApiOperation({ summary: 'Create a new outlet' })
   @ApiResponse({ status: 201, description: 'Outlet created successfully' })
@@ -50,7 +58,7 @@ export class OutletsController {
     return this.outletsService.create(dto);
   }
 
-  @Roles(StaffRole.ADMIN)
+  @Roles(StaffRole.SUPER_ADMIN)
   @Patch(':id')
   @ApiOperation({ summary: 'Update an outlet' })
   @ApiResponse({ status: 200, description: 'Outlet updated successfully' })
@@ -58,7 +66,7 @@ export class OutletsController {
     return this.outletsService.update(id, dto);
   }
 
-  @Roles(StaffRole.ADMIN)
+  @Roles(StaffRole.SUPER_ADMIN)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete an outlet' })

@@ -37,7 +37,13 @@ export class AuthController {
       example: {
         type: 'staff',
         role: 'admin',
-        user: { id: 1, username: 'admin', name: 'Administrator', role: 'admin', outlet_id: 1 },
+        user: {
+          id: 1,
+          username: 'admin',
+          name: 'Administrator',
+          role: 'admin',
+          outlet_id: 1,
+        },
         access_token: '<jwt>',
         refresh_token: '<jwt>',
       },

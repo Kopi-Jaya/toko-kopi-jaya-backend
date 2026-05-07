@@ -18,7 +18,10 @@ import { Staff } from '../staff/entities/staff.entity';
       useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_ACCESS_EXPIRY', '15m') as any,
+          expiresIn: configService.get<string>(
+            'JWT_ACCESS_EXPIRY',
+            '15m',
+          ) as any,
         },
       }),
     }),

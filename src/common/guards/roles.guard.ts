@@ -1,7 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import type { Request } from 'express';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { StaffRole } from '../enums';
+import type { AuthenticatedUser } from '../../auth/jwt.strategy';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -17,12 +19,21 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const { user } = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<Request>();
+    const user = request.user as unknown as AuthenticatedUser | undefined;
 
     if (!user || !user.role) {
       return false;
     }
 
-    return requiredRoles.includes(user.role);
+    const userRole = user.role as StaffRole;
+
+    // SUPER_ADMIN bypasses every role check — they have implicit access to
+    // anything an outlet admin/manager/cashier/barista can do (M-125).
+    if (userRole === StaffRole.SUPER_ADMIN) {
+      return true;
+    }
+
+    return requiredRoles.includes(userRole);
   }
 }

@@ -79,7 +79,15 @@ export class AuthService {
   private async loginAsMember(email: string, password: string) {
     const member = await this.memberRepository.findOne({
       where: { email },
-      select: ['member_id', 'name', 'email', 'password', 'tier', 'current_points', 'is_active'],
+      select: [
+        'member_id',
+        'name',
+        'email',
+        'password',
+        'tier',
+        'current_points',
+        'is_active',
+      ],
     });
 
     if (!member || !member.is_active) {
@@ -113,7 +121,15 @@ export class AuthService {
   private async loginAsStaff(username: string, password: string) {
     const staff = await this.staffRepository.findOne({
       where: { username },
-      select: ['staff_id', 'username', 'name', 'password', 'role', 'outlet_id', 'is_active'],
+      select: [
+        'staff_id',
+        'username',
+        'name',
+        'password',
+        'role',
+        'outlet_id',
+        'is_active',
+      ],
     });
 
     if (!staff || !staff.is_active) {
@@ -129,6 +145,7 @@ export class AuthService {
       sub: staff.staff_id,
       type: 'staff',
       role: staff.role,
+      outlet_id: staff.outlet_id,
     });
 
     return {
@@ -159,6 +176,7 @@ export class AuthService {
         type: payload.type,
         role: payload.role,
         email: payload.email,
+        outlet_id: payload.outlet_id,
       };
 
       return this.generateTokens(newPayload);
@@ -169,8 +187,14 @@ export class AuthService {
 
   async generateTokens(payload: JwtPayload) {
     const secret = this.configService.getOrThrow<string>('JWT_SECRET');
-    const accessExpiry = this.configService.get<string>('JWT_ACCESS_EXPIRY', '15m');
-    const refreshExpiry = this.configService.get<string>('JWT_REFRESH_EXPIRY', '7d');
+    const accessExpiry = this.configService.get<string>(
+      'JWT_ACCESS_EXPIRY',
+      '15m',
+    );
+    const refreshExpiry = this.configService.get<string>(
+      'JWT_REFRESH_EXPIRY',
+      '7d',
+    );
 
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload as any, {
