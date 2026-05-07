@@ -9,7 +9,12 @@ import {
   Request,
   ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -32,7 +37,10 @@ export class OrdersController {
 
   @Get()
   @ApiOperation({ summary: 'Get own orders (member only)' })
-  @ApiResponse({ status: 200, description: 'List of member orders returned successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of member orders returned successfully',
+  })
   findMyOrders(@Request() req, @Query() query: QueryOrderDto) {
     return this.ordersService.findAllByMember(req.user.sub, query);
   }
@@ -40,7 +48,10 @@ export class OrdersController {
   @Roles(StaffRole.ADMIN, StaffRole.MANAGER, StaffRole.CASHIER)
   @Get('admin')
   @ApiOperation({ summary: 'Get all orders (admin/manager/cashier)' })
-  @ApiResponse({ status: 200, description: 'List of orders returned successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of orders returned successfully',
+  })
   findAllAdmin(@Query() query: QueryOrderDto) {
     return this.ordersService.findAllAdmin(query);
   }
@@ -60,10 +71,18 @@ export class OrdersController {
     return this.ordersService.findOne(id);
   }
 
-  @Roles(StaffRole.ADMIN, StaffRole.MANAGER, StaffRole.CASHIER, StaffRole.BARISTA)
+  @Roles(
+    StaffRole.ADMIN,
+    StaffRole.MANAGER,
+    StaffRole.CASHIER,
+    StaffRole.BARISTA,
+  )
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update order status' })
-  @ApiResponse({ status: 200, description: 'Order status updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Order status updated successfully',
+  })
   updateStatus(
     @Request() req,
     @Param('id', ParseIntPipe) id: number,

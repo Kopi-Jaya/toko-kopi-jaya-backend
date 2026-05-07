@@ -39,7 +39,9 @@ export class ShiftsService {
     });
 
     if (openShift) {
-      throw new BadRequestException('Staff already has an open shift. Please end the current shift first.');
+      throw new BadRequestException(
+        'Staff already has an open shift. Please end the current shift first.',
+      );
     }
 
     const shift = this.shiftRepository.create({
@@ -57,13 +59,19 @@ export class ShiftsService {
     });
 
     if (!result) {
-      throw new NotFoundException(`Shift with ID ${saved.shift_id} not found after creation`);
+      throw new NotFoundException(
+        `Shift with ID ${saved.shift_id} not found after creation`,
+      );
     }
 
     return result;
   }
 
-  async endShift(shiftId: number, staffId: number, dto: EndShiftDto): Promise<Shift> {
+  async endShift(
+    shiftId: number,
+    staffId: number,
+    dto: EndShiftDto,
+  ): Promise<Shift> {
     const shift = await this.shiftRepository.findOne({
       where: { shift_id: shiftId },
       relations: ['staff', 'outlet'],
@@ -95,13 +103,17 @@ export class ShiftsService {
     });
 
     if (!updated) {
-      throw new NotFoundException(`Shift with ID ${shiftId} not found after update`);
+      throw new NotFoundException(
+        `Shift with ID ${shiftId} not found after update`,
+      );
     }
 
     return updated;
   }
 
-  async findAll(query: PaginationQueryDto & { staff_id?: number; outlet_id?: number }) {
+  async findAll(
+    query: PaginationQueryDto & { staff_id?: number; outlet_id?: number },
+  ) {
     const { page = 1, limit = 20, staff_id, outlet_id } = query;
     const skip = (page - 1) * limit;
 

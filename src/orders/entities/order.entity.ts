@@ -8,11 +8,7 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import {
-  OrderStatus,
-  OrderSource,
-  OrderType,
-} from '../../common/enums';
+import { OrderStatus, OrderSource, OrderType } from '../../common/enums';
 import { Member } from '../../members/entities/member.entity';
 import { Customer } from '../../customers/entities/customer.entity';
 import { Staff } from '../../staff/entities/staff.entity';

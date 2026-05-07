@@ -1,15 +1,29 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { OrderSource, OrderStatus, OrderType } from '../../common/enums';
 
 export class QueryOrderDto extends PaginationQueryDto {
-  @ApiPropertyOptional({ description: 'Filter by order status', enum: OrderStatus })
+  @ApiPropertyOptional({
+    description: 'Filter by order status',
+    enum: OrderStatus,
+  })
   @IsOptional()
   @IsEnum(OrderStatus)
   status?: OrderStatus;
 
-  @ApiPropertyOptional({ description: 'Filter by order source', enum: OrderSource })
+  @ApiPropertyOptional({
+    description: 'Filter by order source',
+    enum: OrderSource,
+  })
   @IsOptional()
   @IsEnum(OrderSource)
   source?: OrderSource;
@@ -33,4 +47,11 @@ export class QueryOrderDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   pickup_code?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by outlet (M-125)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  outlet_id?: number;
 }

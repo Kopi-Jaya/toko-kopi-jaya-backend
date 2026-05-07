@@ -20,9 +20,9 @@ import {
 import { StaffService } from './staff.service';
 import { CreateStaffDto } from './dto/create-staff.dto';
 import { UpdateStaffDto } from './dto/update-staff.dto';
+import { QueryStaffDto } from './dto/query-staff.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { StaffRole } from '../common/enums';
-import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
 @ApiTags('staff')
 @ApiBearerAuth()
@@ -37,7 +37,7 @@ export class StaffController {
     status: 200,
     description: 'List of staff returned successfully',
   })
-  findAll(@Query() query: PaginationQueryDto) {
+  findAll(@Query() query: QueryStaffDto) {
     return this.staffService.findAll(query);
   }
 

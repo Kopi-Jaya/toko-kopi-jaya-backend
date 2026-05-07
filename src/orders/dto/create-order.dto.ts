@@ -28,7 +28,10 @@ export class CreateOrderItemDto {
   @Min(1)
   quantity: number;
 
-  @ApiPropertyOptional({ description: 'Item modifiers', type: [CreateOrderItemModifierDto] })
+  @ApiPropertyOptional({
+    description: 'Item modifiers',
+    type: [CreateOrderItemModifierDto],
+  })
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemModifierDto)

@@ -32,8 +32,14 @@ import {
 const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],
   [OrderStatus.PAID]: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
-  [OrderStatus.PREPARING]: [OrderStatus.READY_FOR_PICKUP, OrderStatus.CANCELLED],
-  [OrderStatus.READY_FOR_PICKUP]: [OrderStatus.COMPLETED, OrderStatus.CANCELLED],
+  [OrderStatus.PREPARING]: [
+    OrderStatus.READY_FOR_PICKUP,
+    OrderStatus.CANCELLED,
+  ],
+  [OrderStatus.READY_FOR_PICKUP]: [
+    OrderStatus.COMPLETED,
+    OrderStatus.CANCELLED,
+  ],
   [OrderStatus.COMPLETED]: [],
   [OrderStatus.CANCELLED]: [],
 };
@@ -72,35 +78,49 @@ export class OrdersService {
         where: { outlet_id: dto.outlet_id },
       });
       if (!outlet) {
-        throw new NotFoundException(`Outlet with ID ${dto.outlet_id} not found`);
+        throw new NotFoundException(
+          `Outlet with ID ${dto.outlet_id} not found`,
+        );
       }
       if (outlet.status !== OutletStatus.ACTIVE) {
-        throw new BadRequestException(`Outlet "${outlet.name}" is not currently active`);
+        throw new BadRequestException(
+          `Outlet "${outlet.name}" is not currently active`,
+        );
       }
 
       // 2. Validate and load all products
       const productIds = dto.items.map((item) => item.product_id);
       const products = await queryRunner.manager.findByIds(Product, productIds);
-      const productMap = new Map(products.map((p) => [Number(p.product_id), p]));
+      const productMap = new Map(
+        products.map((p) => [Number(p.product_id), p]),
+      );
 
       for (const item of dto.items) {
         const product = productMap.get(Number(item.product_id));
         if (!product) {
-          throw new NotFoundException(`Product with ID ${item.product_id} not found`);
+          throw new NotFoundException(
+            `Product with ID ${item.product_id} not found`,
+          );
         }
         if (!product.is_available) {
-          throw new BadRequestException(`Product "${product.name}" is not available`);
+          throw new BadRequestException(
+            `Product "${product.name}" is not available`,
+          );
         }
       }
 
       // 3. Validate and load all modifiers
-      const allModifierIds = dto.items
-        .flatMap((item) => item.modifiers?.map((m) => m.modifier_id) ?? []);
+      const allModifierIds = dto.items.flatMap(
+        (item) => item.modifiers?.map((m) => m.modifier_id) ?? [],
+      );
       const modifierMap = new Map<number, Modifier>();
 
       if (allModifierIds.length > 0) {
         const uniqueModifierIds = [...new Set(allModifierIds)];
-        const modifiers = await queryRunner.manager.findByIds(Modifier, uniqueModifierIds);
+        const modifiers = await queryRunner.manager.findByIds(
+          Modifier,
+          uniqueModifierIds,
+        );
         for (const mod of modifiers) {
           modifierMap.set(Number(mod.modifier_id), mod);
         }
@@ -138,17 +158,25 @@ export class OrdersService {
         });
 
         if (!discountEntity) {
-          throw new NotFoundException(`Discount code "${dto.discount_code}" not found`);
+          throw new NotFoundException(
+            `Discount code "${dto.discount_code}" not found`,
+          );
         }
         if (!discountEntity.is_active) {
           throw new BadRequestException('Discount code is no longer active');
         }
 
         const now = new Date();
-        if (discountEntity.valid_from && new Date(discountEntity.valid_from) > now) {
+        if (
+          discountEntity.valid_from &&
+          new Date(discountEntity.valid_from) > now
+        ) {
           throw new BadRequestException('Discount code is not yet valid');
         }
-        if (discountEntity.valid_until && new Date(discountEntity.valid_until) < now) {
+        if (
+          discountEntity.valid_until &&
+          new Date(discountEntity.valid_until) < now
+        ) {
           throw new BadRequestException('Discount code has expired');
         }
         if (
@@ -166,7 +194,10 @@ export class OrdersService {
         if (discountEntity.type === ChargeType.PERCENTAGE) {
           discountAmount = subtotal * (Number(discountEntity.value) / 100);
           if (discountEntity.max_discount !== null) {
-            discountAmount = Math.min(discountAmount, Number(discountEntity.max_discount));
+            discountAmount = Math.min(
+              discountAmount,
+              Number(discountEntity.max_discount),
+            );
           }
         } else {
           discountAmount = Number(discountEntity.value);
@@ -200,7 +231,9 @@ export class OrdersService {
           where: { service_charge_id: dto.service_charge_id },
         });
         if (!sc) {
-          throw new NotFoundException(`Service charge with ID ${dto.service_charge_id} not found`);
+          throw new NotFoundException(
+            `Service charge with ID ${dto.service_charge_id} not found`,
+          );
         }
         if (sc.type === ChargeType.PERCENTAGE) {
           serviceChargeAmount = subtotal * (Number(sc.value) / 100);
@@ -212,7 +245,9 @@ export class OrdersService {
 
       // 8. Calculate total
       const totalFinal =
-        Math.round((subtotal - discountAmount + taxAmount + serviceChargeAmount) * 100) / 100;
+        Math.round(
+          (subtotal - discountAmount + taxAmount + serviceChargeAmount) * 100,
+        ) / 100;
 
       // 9. Generate unique pickup code
       let pickupCode: string;
@@ -348,7 +383,17 @@ export class OrdersService {
   }
 
   async findAllAdmin(query: QueryOrderDto) {
-    const { page = 1, limit = 20, status, source, order_type, date_from, date_to, pickup_code } = query;
+    const {
+      page = 1,
+      limit = 20,
+      status,
+      source,
+      order_type,
+      date_from,
+      date_to,
+      pickup_code,
+      outlet_id,
+    } = query;
     const skip = (page - 1) * limit;
 
     const qb = this.orderRepository
@@ -368,6 +413,9 @@ export class OrdersService {
     }
     if (order_type) {
       qb.andWhere('order.order_type = :order_type', { order_type });
+    }
+    if (outlet_id !== undefined) {
+      qb.andWhere('order.outlet_id = :outlet_id', { outlet_id });
     }
     if (date_from) {
       qb.andWhere('order.created_at >= :date_from', { date_from });
@@ -410,7 +458,9 @@ export class OrdersService {
     });
 
     if (!order) {
-      throw new NotFoundException(`Order with pickup code "${pickupCode}" not found`);
+      throw new NotFoundException(
+        `Order with pickup code "${pickupCode}" not found`,
+      );
     }
 
     return order;
@@ -442,7 +492,11 @@ export class OrdersService {
     return order;
   }
 
-  async updateStatus(id: number, dto: UpdateOrderStatusDto, user: any): Promise<Order> {
+  async updateStatus(
+    id: number,
+    dto: UpdateOrderStatusDto,
+    user: any,
+  ): Promise<Order> {
     const order = await this.findOne(id);
 
     const allowedTransitions = STATUS_TRANSITIONS[order.status];
