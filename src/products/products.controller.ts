@@ -61,7 +61,10 @@ export class ProductsController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'Get all products with filtering and pagination' })
-  @ApiResponse({ status: 200, description: 'List of products returned successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of products returned successfully',
+  })
   findAll(@Query() query: QueryProductDto) {
     return this.productsService.findAll(query);
   }
@@ -128,7 +131,10 @@ export class ProductsController {
           cb(null, dir);
         },
         filename: (_req, file, cb) => {
-          cb(null, `${randomUUID()}${extname(file.originalname).toLowerCase()}`);
+          cb(
+            null,
+            `${randomUUID()}${extname(file.originalname).toLowerCase()}`,
+          );
         },
       }),
       limits: { fileSize: MAX_BYTES },
@@ -151,14 +157,32 @@ export class ProductsController {
     @Req() req: Request,
   ) {
     if (!file) {
-      throw new BadRequestException('No file uploaded (field name must be "file")');
+      throw new BadRequestException(
+        'No file uploaded (field name must be "file")',
+      );
     }
 
     const relativePath = `${PRODUCT_IMAGE_SUBDIR}/${file.filename}`;
     // Build an absolute URL so mobile/admin clients can render directly.
-    const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
-    const host = req.headers['x-forwarded-host'] || req.headers.host;
-    const publicUrl = `${proto}://${host}/uploads/${relativePath}`;
+    // Prefer PUBLIC_API_URL (DEFECT-008): Traefik doesn't inject
+    // x-forwarded-host on this app, so the request-derived fallback
+    // resolves to the internal Docker hostname and breaks clients.
+    const publicApiUrl = this.configService
+      .get<string>('PUBLIC_API_URL')
+      ?.replace(/\/+$/, '');
+    let publicUrl: string;
+    if (publicApiUrl) {
+      publicUrl = `${publicApiUrl}/uploads/${relativePath}`;
+    } else {
+      const proto =
+        (req.headers['x-forwarded-proto'] as string) || req.protocol;
+      const forwardedHost = req.headers['x-forwarded-host'];
+      const host =
+        (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ??
+        req.headers.host ??
+        '';
+      publicUrl = `${proto}://${host}/uploads/${relativePath}`;
+    }
 
     return this.productsService.setImage(
       id,
