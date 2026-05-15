@@ -7,14 +7,16 @@ export class AnalyticsService {
   constructor(private readonly dataSource: DataSource) {}
 
   async getSalesBySource(query: QueryAnalyticsDto) {
-    // Aggregate the date-bucketed view into one row per source so the
-    // pie chart gets a single slice per channel (Mobile App, etc.).
     let sql = `SELECT source,
         SUM(order_count)  AS total_orders,
         SUM(total_revenue) AS total_revenue
       FROM v_sales_by_source WHERE 1=1`;
     const params: any[] = [];
 
+    if (query.outlet_id) {
+      sql += ' AND outlet_id = ?';
+      params.push(query.outlet_id);
+    }
     if (query.date_from) {
       sql += ' AND sale_date >= ?';
       params.push(query.date_from);
@@ -35,62 +37,62 @@ export class AnalyticsService {
   }
 
   async getProductPerformance(query: QueryAnalyticsDto) {
-    let sql = 'SELECT * FROM v_product_performance WHERE 1=1';
     const params: any[] = [];
+    let sql: string;
 
-    if (query.category_id) {
-      sql += ' AND category_id = ?';
-      params.push(query.category_id);
-    }
-    if (query.date_from) {
-      sql += ' AND order_date >= ?';
-      params.push(query.date_from);
-    }
-    if (query.date_to) {
-      sql += ' AND order_date <= ?';
-      params.push(query.date_to);
-    }
-
-    if (query.sort_by) {
-      const allowed = ['total_quantity_sold', 'total_revenue', 'product_name', 'order_date'];
-      if (allowed.includes(query.sort_by)) {
-        sql += ` ORDER BY ${query.sort_by} DESC`;
-      }
+    if (query.outlet_id) {
+      // Direct join so we can filter by outlet
+      sql = `SELECT p.product_id, p.name,
+          SUM(oi.quantity) AS total_quantity_sold,
+          SUM(oi.quantity * oi.price_at_purchase) AS total_revenue
+        FROM products p
+        JOIN order_items oi ON p.product_id = oi.product_id
+        JOIN orders o ON oi.order_id = o.order_id
+        WHERE o.outlet_id = ?`;
+      params.push(query.outlet_id);
+      if (query.date_from) { sql += ' AND DATE(o.created_at) >= ?'; params.push(query.date_from); }
+      if (query.date_to)   { sql += ' AND DATE(o.created_at) <= ?'; params.push(query.date_to); }
+      sql += ' GROUP BY p.product_id ORDER BY total_quantity_sold DESC';
     } else {
-      sql += ' ORDER BY total_quantity_sold DESC';
+      sql = 'SELECT * FROM v_product_performance WHERE 1=1';
+      if (query.category_id) { sql += ' AND category_id = ?'; params.push(query.category_id); }
+      if (query.date_from)   { sql += ' AND order_date >= ?'; params.push(query.date_from); }
+      if (query.date_to)     { sql += ' AND order_date <= ?'; params.push(query.date_to); }
+      const allowed = ['total_quantity_sold', 'total_revenue', 'product_name', 'order_date'];
+      sql += query.sort_by && allowed.includes(query.sort_by)
+        ? ` ORDER BY ${query.sort_by} DESC`
+        : ' ORDER BY total_quantity_sold DESC';
     }
 
-    if (query.limit) {
-      sql += ' LIMIT ?';
-      params.push(query.limit);
-    }
-
+    if (query.limit) { sql += ' LIMIT ?'; params.push(query.limit); }
     return this.dataSource.query(sql, params);
   }
 
   async getMemberLoyalty(query: QueryAnalyticsDto) {
-    let sql = 'SELECT * FROM v_member_loyalty_summary WHERE 1=1';
     const params: any[] = [];
+    let sql: string;
 
-    if (query.tier) {
-      sql += ' AND tier = ?';
-      params.push(query.tier);
-    }
-
-    if (query.sort_by) {
-      const allowed = ['lifetime_points_earned', 'current_points', 'total_orders', 'total_spent', 'name'];
-      if (allowed.includes(query.sort_by)) {
-        sql += ` ORDER BY ${query.sort_by} DESC`;
-      }
+    if (query.outlet_id) {
+      // Members who have ordered at this specific outlet
+      sql = `SELECT m.member_id, m.name, m.tier,
+          m.lifetime_points_earned, m.current_points,
+          COUNT(DISTINCT o.order_id) AS total_orders
+        FROM member m
+        JOIN orders o ON m.member_id = o.member_id
+        WHERE o.outlet_id = ?`;
+      params.push(query.outlet_id);
+      if (query.tier) { sql += ' AND m.tier = ?'; params.push(query.tier); }
+      sql += ' GROUP BY m.member_id ORDER BY m.lifetime_points_earned DESC';
     } else {
-      sql += ' ORDER BY lifetime_points_earned DESC';
+      sql = 'SELECT * FROM v_member_loyalty_summary WHERE 1=1';
+      if (query.tier) { sql += ' AND tier = ?'; params.push(query.tier); }
+      const allowed = ['lifetime_points_earned', 'current_points', 'total_orders', 'total_spent', 'name'];
+      sql += query.sort_by && allowed.includes(query.sort_by)
+        ? ` ORDER BY ${query.sort_by} DESC`
+        : ' ORDER BY lifetime_points_earned DESC';
     }
 
-    if (query.limit) {
-      sql += ' LIMIT ?';
-      params.push(query.limit);
-    }
-
+    if (query.limit) { sql += ' LIMIT ?'; params.push(query.limit); }
     return this.dataSource.query(sql, params);
   }
 }
