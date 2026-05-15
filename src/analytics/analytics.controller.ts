@@ -32,6 +32,13 @@ export class AnalyticsController {
   }
 
   @Roles(StaffRole.ADMIN, StaffRole.MANAGER)
+  @Get('product-outlets')
+  @ApiOperation({ summary: 'Get outlet assignments for all products' })
+  getProductOutlets() {
+    return this.analyticsService.getProductOutlets();
+  }
+
+  @Roles(StaffRole.ADMIN, StaffRole.MANAGER)
   @Get('member-loyalty')
   @ApiOperation({ summary: 'Get member loyalty analytics' })
   @ApiResponse({ status: 200, description: 'Member loyalty data returned successfully' })
