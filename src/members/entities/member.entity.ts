@@ -11,7 +11,6 @@ import { Exclude } from 'class-transformer';
 import { MemberTier } from '../../common/enums';
 import { Order } from '../../orders/entities/order.entity';
 import { PointsHistory } from './points-history.entity';
-import { Favorite } from '../../favorites/entities/favorite.entity';
 
 @Entity('member')
 export class Member {
@@ -66,7 +65,4 @@ export class Member {
 
   @OneToMany(() => PointsHistory, (ph) => ph.member)
   points_history: PointsHistory[];
-
-  @OneToMany(() => Favorite, (fav) => fav.member)
-  favorites: Favorite[];
 }

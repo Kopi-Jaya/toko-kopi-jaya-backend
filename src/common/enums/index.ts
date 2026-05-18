@@ -70,6 +70,11 @@ export enum ModifierType {
   REMOVE = 'remove',
 }
 
+export enum ModifierSelectionType {
+  SINGLE = 'single',
+  MULTIPLE = 'multiple',
+}
+
 export enum ChargeType {
   NOMINAL = 'nominal',
   PERCENTAGE = 'percentage',

@@ -7,17 +7,17 @@ import {
   JoinColumn,
   Unique,
 } from 'typeorm';
-import { Member } from '../../members/entities/member.entity';
+import { Outlet } from '../../outlets/entities/outlet.entity';
 import { Product } from '../../products/entities/product.entity';
 
 @Entity('favorite')
-@Unique(['member_id', 'product_id'])
+@Unique(['outlet_id', 'product_id'])
 export class Favorite {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   favorite_id: number;
 
-  @Column({ type: 'bigint', unsigned: true, name: 'staff_id' })
-  member_id: number;
+  @Column({ type: 'bigint', unsigned: true })
+  outlet_id: number;
 
   @Column({ type: 'bigint', unsigned: true })
   product_id: number;
@@ -25,11 +25,11 @@ export class Favorite {
   @CreateDateColumn()
   created_at: Date;
 
-  @ManyToOne(() => Member, (member) => member.favorites)
-  @JoinColumn({ name: 'staff_id' })
-  member: Member;
+  @ManyToOne(() => Outlet, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'outlet_id' })
+  outlet: Outlet;
 
-  @ManyToOne(() => Product)
+  @ManyToOne(() => Product, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product: Product;
 }

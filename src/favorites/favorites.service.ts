@@ -15,25 +15,25 @@ export class FavoritesService {
     private readonly favoriteRepository: Repository<Favorite>,
   ) {}
 
-  async findAll(userId: number): Promise<Favorite[]> {
+  async findAll(outletId: number): Promise<Favorite[]> {
     return this.favoriteRepository.find({
-      where: { member_id: userId },
+      where: { outlet_id: outletId },
       relations: ['product', 'product.category'],
       order: { created_at: 'DESC' },
     });
   }
 
-  async create(userId: number, dto: CreateFavoriteDto): Promise<Favorite> {
+  async create(dto: CreateFavoriteDto): Promise<Favorite> {
     const existing = await this.favoriteRepository.findOne({
-      where: { member_id: userId, product_id: dto.product_id },
+      where: { outlet_id: dto.outlet_id, product_id: dto.product_id },
     });
 
     if (existing) {
-      throw new ConflictException('Product is already in favorites');
+      throw new ConflictException('Product is already in favorites for this outlet');
     }
 
     const favorite = this.favoriteRepository.create({
-      member_id: userId,
+      outlet_id: dto.outlet_id,
       product_id: dto.product_id,
     });
 
@@ -51,16 +51,12 @@ export class FavoritesService {
     return result;
   }
 
-  async remove(userId: number, favoriteId: number): Promise<void> {
+  async remove(favoriteId: number): Promise<void> {
     const favorite = await this.favoriteRepository.findOne({
       where: { favorite_id: favoriteId },
     });
 
     if (!favorite) {
-      throw new NotFoundException(`Favorite with ID ${favoriteId} not found`);
-    }
-
-    if (Number(favorite.member_id) !== Number(userId)) {
       throw new NotFoundException(`Favorite with ID ${favoriteId} not found`);
     }
 

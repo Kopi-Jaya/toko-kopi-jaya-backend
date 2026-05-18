@@ -15,6 +15,12 @@ export class CreateStaffDto {
   @IsString()
   name: string;
 
+  @ApiPropertyOptional({ description: 'Staff phone number', maxLength: 20 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  phone?: string | null;
+
   @ApiProperty({ description: 'Staff role', enum: StaffRole })
   @IsEnum(StaffRole)
   role: StaffRole;

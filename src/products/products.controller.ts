@@ -34,6 +34,7 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { QueryProductDto } from './dto/query-product.dto';
+import { AssignProductModifierDto } from './dto/assign-product-modifier.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { StaffRole } from '../common/enums';
@@ -100,6 +101,37 @@ export class ProductsController {
   @ApiResponse({ status: 204, description: 'Product deleted successfully' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.remove(id);
+  }
+
+  @Public()
+  @Get(':id/modifiers')
+  @ApiOperation({ summary: 'Get all modifiers assigned to a product' })
+  @ApiResponse({ status: 200, description: 'Product modifier list returned' })
+  getProductModifiers(@Param('id', ParseIntPipe) id: number) {
+    return this.productsService.getProductModifiers(id);
+  }
+
+  @Roles(StaffRole.SUPER_ADMIN, StaffRole.ADMIN, StaffRole.MANAGER)
+  @Post(':id/modifiers')
+  @ApiOperation({ summary: 'Assign a modifier to a product' })
+  @ApiResponse({ status: 201, description: 'Modifier assigned successfully' })
+  addProductModifier(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AssignProductModifierDto,
+  ) {
+    return this.productsService.addProductModifier(id, dto.modifier_id);
+  }
+
+  @Roles(StaffRole.SUPER_ADMIN, StaffRole.ADMIN, StaffRole.MANAGER)
+  @Delete(':id/modifiers/:modifierId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove a modifier from a product' })
+  @ApiResponse({ status: 204, description: 'Modifier removed from product' })
+  removeProductModifier(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('modifierId', ParseIntPipe) modifierId: number,
+  ) {
+    return this.productsService.removeProductModifier(id, modifierId);
   }
 
   @Roles(StaffRole.ADMIN, StaffRole.MANAGER)

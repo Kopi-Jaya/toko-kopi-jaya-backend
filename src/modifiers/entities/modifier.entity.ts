@@ -4,7 +4,7 @@ import {
   Column,
   DeleteDateColumn,
 } from 'typeorm';
-import { ModifierType } from '../../common/enums';
+import { ModifierSelectionType, ModifierType } from '../../common/enums';
 
 @Entity('modifier')
 export class Modifier {
@@ -13,6 +13,16 @@ export class Modifier {
 
   @Column({ type: 'varchar', length: 100 })
   name: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true, default: null })
+  group_name: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: ModifierSelectionType,
+    default: ModifierSelectionType.SINGLE,
+  })
+  selection_type: ModifierSelectionType;
 
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   extra_price: number;

@@ -23,6 +23,9 @@ export class Staff {
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
+  @Column({ type: 'varchar', length: 20, nullable: true, default: null })
+  phone: string | null;
+
   @Column({ type: 'enum', enum: StaffRole })
   role: StaffRole;
 

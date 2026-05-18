@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,6 +9,7 @@ import { Repository } from 'typeorm';
 import { existsSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { Product } from './entities/product.entity';
+import { ProductModifier } from '../modifiers/entities/product-modifier.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { QueryProductDto, ProductSortBy, SortOrder } from './dto/query-product.dto';
@@ -17,6 +19,8 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(ProductModifier)
+    private readonly productModifierRepository: Repository<ProductModifier>,
   ) {}
 
   async findAll(query: QueryProductDto) {
@@ -96,6 +100,36 @@ export class ProductsService {
     const exists = await this.productRepository.existsBy({ product_id: id });
     if (!exists) throw new NotFoundException(`Product with ID ${id} not found`);
     await this.productRepository.softDelete(id);
+  }
+
+  async getProductModifiers(productId: number): Promise<ProductModifier[]> {
+    await this.findOne(productId);
+    return this.productModifierRepository.find({
+      where: { product_id: productId },
+      relations: ['modifier'],
+    });
+  }
+
+  async addProductModifier(productId: number, modifierId: number): Promise<ProductModifier> {
+    await this.findOne(productId);
+    const existing = await this.productModifierRepository.findOne({
+      where: { product_id: productId, modifier_id: modifierId },
+    });
+    if (existing) {
+      throw new ConflictException('Modifier is already assigned to this product');
+    }
+    const pm = this.productModifierRepository.create({ product_id: productId, modifier_id: modifierId });
+    return this.productModifierRepository.save(pm);
+  }
+
+  async removeProductModifier(productId: number, modifierId: number): Promise<void> {
+    const pm = await this.productModifierRepository.findOne({
+      where: { product_id: productId, modifier_id: modifierId },
+    });
+    if (!pm) {
+      throw new NotFoundException('Modifier is not assigned to this product');
+    }
+    await this.productModifierRepository.remove(pm);
   }
 
   /// Stores the new image URL on the product. Deletes the prior local file
