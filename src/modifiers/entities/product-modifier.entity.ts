@@ -2,8 +2,6 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
   JoinColumn,
   Unique,
@@ -22,12 +20,6 @@ export class ProductModifier {
 
   @Column({ type: 'bigint', unsigned: true })
   modifier_id: number;
-
-  @CreateDateColumn({ nullable: true })
-  created_at: Date | null;
-
-  @UpdateDateColumn({ nullable: true })
-  updated_at: Date | null;
 
   @ManyToOne(() => Product, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
