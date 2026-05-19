@@ -10,6 +10,10 @@ import { Order } from '../orders/entities/order.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { OrderStatus, PaymentMethod, PaymentStatus } from '../common/enums';
 
+export interface PaymentWithChange extends Payment {
+  change?: number;
+}
+
 @Injectable()
 export class PaymentService {
   constructor(
@@ -19,7 +23,7 @@ export class PaymentService {
     private readonly orderRepository: Repository<Order>,
   ) {}
 
-  async create(dto: CreatePaymentDto): Promise<Payment> {
+  async create(dto: CreatePaymentDto): Promise<PaymentWithChange> {
     const order = await this.orderRepository.findOne({
       where: { order_id: dto.order_id },
     });
@@ -49,6 +53,18 @@ export class PaymentService {
     const isCash = dto.payment_method === PaymentMethod.CASH;
     const now = new Date();
 
+    // Validate and compute change for Tunai (cash) payments.
+    let change: number | undefined;
+    if (isCash && dto.cash_received != null) {
+      const orderTotal = Number(order.total_final);
+      if (dto.cash_received < orderTotal) {
+        throw new BadRequestException(
+          `Cash received (${dto.cash_received}) is less than order total (${orderTotal})`,
+        );
+      }
+      change = dto.cash_received - orderTotal;
+    }
+
     const payment = this.paymentRepository.create({
       order_id: dto.order_id,
       payment_method: dto.payment_method,
@@ -66,7 +82,8 @@ export class PaymentService {
       });
     }
 
-    return saved;
+    const result: PaymentWithChange = Object.assign(saved, { change });
+    return result;
   }
 
   async findByOrderId(orderId: number): Promise<Payment> {
@@ -104,5 +121,30 @@ export class PaymentService {
     }
 
     return this.paymentRepository.save(payment);
+  }
+
+  /** Cashier manually confirms a QRIS payment has been received. */
+  async confirmQris(paymentId: number): Promise<Payment> {
+    const payment = await this.paymentRepository.findOne({
+      where: { payment_id: paymentId },
+    });
+
+    if (!payment) {
+      throw new NotFoundException(`Payment with ID ${paymentId} not found`);
+    }
+
+    if (payment.payment_method !== PaymentMethod.QRIS) {
+      throw new BadRequestException(
+        `Payment ${paymentId} is not a QRIS payment (method: ${payment.payment_method})`,
+      );
+    }
+
+    if (payment.status !== PaymentStatus.PENDING) {
+      throw new BadRequestException(
+        `Payment ${paymentId} is not pending. Current status: "${payment.status}"`,
+      );
+    }
+
+    return this.updateStatus(paymentId, PaymentStatus.SUCCESS);
   }
 }

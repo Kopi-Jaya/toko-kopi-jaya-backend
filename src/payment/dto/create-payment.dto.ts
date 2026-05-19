@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNumber, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsNumber, IsOptional, Min } from 'class-validator';
 import { PaymentMethod } from '../../common/enums';
 
 export class CreatePaymentDto {
@@ -15,4 +15,13 @@ export class CreatePaymentDto {
   @IsNumber()
   @Min(0)
   amount: number;
+
+  @ApiPropertyOptional({
+    description: 'Cash received from customer (Tunai only). Must be >= amount. Response will include calculated change.',
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cash_received?: number;
 }
