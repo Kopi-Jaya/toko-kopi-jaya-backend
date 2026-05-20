@@ -73,7 +73,7 @@ export class AnalyticsService {
       SELECT op.product_id,
              GROUP_CONCAT(o.name ORDER BY o.name SEPARATOR ', ') AS outlet_names
       FROM outlet_products op
-      JOIN outlets o ON op.outlet_id = o.outlet_id
+      JOIN outlet o ON op.outlet_id = o.outlet_id
       WHERE op.deleted_at IS NULL
       GROUP BY op.product_id
     `);
