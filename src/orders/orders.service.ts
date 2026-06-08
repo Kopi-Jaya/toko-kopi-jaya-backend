@@ -22,6 +22,7 @@ import { Staff } from '../staff/entities/staff.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { OrdersGateway } from './orders.gateway';
 import {
   OrderStatus,
   OrderSource,
@@ -65,6 +66,7 @@ export class OrdersService {
     private readonly memberRepository: Repository<Member>,
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
+    private readonly ordersGateway: OrdersGateway,
   ) {}
 
   async create(dto: CreateOrderDto, user: any): Promise<Order> {
@@ -525,7 +527,12 @@ export class OrdersService {
     // the UPDATE statement, which would re-fire the DB AFTER UPDATE trigger on
     // 'orders' and cause the "Can't update table in stored function/trigger" error.
     await this.orderRepository.update({ order_id: id }, fields);
-    return this.findOne(id);
+    const updated = await this.findOne(id);
+
+    // Push live update to the member's connected socket (if any).
+    this.ordersGateway.emitOrderUpdated(updated, updated.member_id ?? null);
+
+    return updated;
   }
 
   private generatePickupCode(): string {
