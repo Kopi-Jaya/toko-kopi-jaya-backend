@@ -32,6 +32,9 @@ export class Outlet {
   @Column({ type: 'varchar', length: 20, nullable: true })
   phone: string | null;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  logo_url: string | null;
+
   @Column({ type: 'enum', enum: OutletStatus, default: OutletStatus.ACTIVE })
   status: OutletStatus;
 

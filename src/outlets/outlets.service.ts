@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { existsSync, unlinkSync } from 'node:fs';
+import { join } from 'node:path';
 import { Outlet } from './entities/outlet.entity';
 import { CreateOutletDto } from './dto/create-outlet.dto';
 import { UpdateOutletDto } from './dto/update-outlet.dto';
@@ -81,5 +83,35 @@ export class OutletsService {
     const exists = await this.outletRepository.existsBy({ outlet_id: id });
     if (!exists) throw new NotFoundException(`Outlet with ID ${id} not found`);
     await this.outletRepository.softDelete(id);
+  }
+
+  async setLogo(
+    id: number,
+    publicUrl: string,
+    relativeFilePath: string,
+    uploadsRoot: string,
+  ): Promise<Outlet> {
+    if (!publicUrl) throw new BadRequestException('Logo upload failed (no file)');
+    const outlet = await this.findOne(id);
+    const previous = outlet.logo_url;
+
+    outlet.logo_url = publicUrl;
+    await this.outletRepository.save(outlet);
+
+    if (previous && previous.includes('/uploads/')) {
+      const previousPath = previous.split('/uploads/').pop();
+      if (previousPath) {
+        const previousAbsolute = join(uploadsRoot, previousPath);
+        if (
+          previousAbsolute.startsWith(uploadsRoot) &&
+          previousAbsolute !== join(uploadsRoot, relativeFilePath) &&
+          existsSync(previousAbsolute)
+        ) {
+          try { unlinkSync(previousAbsolute); } catch (_) {}
+        }
+      }
+    }
+
+    return this.findOne(id);
   }
 }
