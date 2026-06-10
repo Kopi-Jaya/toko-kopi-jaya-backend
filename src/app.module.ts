@@ -26,6 +26,7 @@ import { TaxModule } from './tax/tax.module';
 import { ServiceChargeModule } from './service-charge/service-charge.module';
 import { ShiftsModule } from './shifts/shifts.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     ServiceChargeModule,
     ShiftsModule,
     AnalyticsModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [
