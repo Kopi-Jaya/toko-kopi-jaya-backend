@@ -15,6 +15,7 @@ import { DiscountsService } from './discounts.service';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { ValidateDiscountDto } from './dto/validate-discount.dto';
+import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { StaffRole } from '../common/enums';
 
@@ -65,6 +66,7 @@ export class DiscountsController {
     return this.discountsService.remove(id);
   }
 
+  @Public()
   @Post('validate')
   @ApiOperation({ summary: 'Validate a discount code' })
   @ApiResponse({ status: 200, description: 'Discount validation result returned' })
