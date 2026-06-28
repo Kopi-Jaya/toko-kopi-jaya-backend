@@ -36,6 +36,15 @@ export class Order {
   @Column({ type: 'bigint', unsigned: true })
   outlet_id: number;
 
+  @Column({ type: 'bigint', unsigned: true, nullable: true })
+  table_id: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  pax: number | null;
+
+  @Column({ type: 'bigint', unsigned: true, nullable: true })
+  waiter_id: number | null;
+
   @Column({
     type: 'enum',
     enum: OrderSource,

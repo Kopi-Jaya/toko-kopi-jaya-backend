@@ -43,6 +43,12 @@ export class Payment {
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   amount: number;
 
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  amount_paid: number | null;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  change_amount: number | null;
+
   @CreateDateColumn()
   created_at: Date;
 

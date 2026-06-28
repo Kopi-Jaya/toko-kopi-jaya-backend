@@ -31,6 +31,9 @@ export class OrderItem {
   @Column({ type: 'int', unsigned: true, default: 0 })
   points_earned_per_item: number;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  notes: string | null;
+
   @Column({
     type: 'int',
     unsigned: true,
