@@ -54,11 +54,21 @@ export class AnalyticsService {
       if (query.date_to)   { sql += ' AND DATE(o.created_at) <= ?'; params.push(query.date_to); }
       sql += ' GROUP BY p.product_id ORDER BY total_quantity_sold DESC';
     } else {
-      sql = 'SELECT * FROM v_product_performance WHERE 1=1';
-      if (query.category_id) { sql += ' AND category_id = ?'; params.push(query.category_id); }
-      if (query.date_from)   { sql += ' AND order_date >= ?'; params.push(query.date_from); }
-      if (query.date_to)     { sql += ' AND order_date <= ?'; params.push(query.date_to); }
-      const allowed = ['total_quantity_sold', 'total_revenue', 'product_name', 'order_date'];
+      // No view backs this query on the live DB (v_product_performance was
+      // deprecated by M-129 in favor of direct SQL) — mirror the outlet_id
+      // branch above but without the outlet filter.
+      sql = `SELECT p.product_id, p.name,
+          SUM(oi.quantity) AS total_quantity_sold,
+          SUM(oi.quantity * oi.price_at_purchase) AS total_revenue
+        FROM products p
+        JOIN order_items oi ON p.product_id = oi.product_id
+        JOIN orders o ON oi.order_id = o.order_id
+        WHERE 1=1`;
+      if (query.category_id) { sql += ' AND p.category_id = ?'; params.push(query.category_id); }
+      if (query.date_from)   { sql += ' AND DATE(o.created_at) >= ?'; params.push(query.date_from); }
+      if (query.date_to)     { sql += ' AND DATE(o.created_at) <= ?'; params.push(query.date_to); }
+      sql += ' GROUP BY p.product_id';
+      const allowed = ['total_quantity_sold', 'total_revenue', 'name'];
       sql += query.sort_by && allowed.includes(query.sort_by)
         ? ` ORDER BY ${query.sort_by} DESC`
         : ' ORDER BY total_quantity_sold DESC';
@@ -99,8 +109,18 @@ export class AnalyticsService {
       if (query.tier) { sql += ' AND m.tier = ?'; params.push(query.tier); }
       sql += ' GROUP BY m.member_id ORDER BY m.lifetime_points_earned DESC';
     } else {
-      sql = 'SELECT * FROM v_member_loyalty_summary WHERE 1=1';
-      if (query.tier) { sql += ' AND tier = ?'; params.push(query.tier); }
+      // No view backs this query on the live DB (v_member_loyalty_summary was
+      // deprecated by M-129 in favor of direct SQL) — mirror the outlet_id
+      // branch above but without the outlet filter.
+      sql = `SELECT m.member_id, m.name, m.tier,
+          m.lifetime_points_earned, m.current_points,
+          COUNT(DISTINCT o.order_id) AS total_orders,
+          COALESCE(SUM(o.total_final), 0) AS total_spent
+        FROM member m
+        LEFT JOIN orders o ON m.member_id = o.member_id
+        WHERE 1=1`;
+      if (query.tier) { sql += ' AND m.tier = ?'; params.push(query.tier); }
+      sql += ' GROUP BY m.member_id';
       const allowed = ['lifetime_points_earned', 'current_points', 'total_orders', 'total_spent', 'name'];
       sql += query.sort_by && allowed.includes(query.sort_by)
         ? ` ORDER BY ${query.sort_by} DESC`
