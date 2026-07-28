@@ -731,13 +731,41 @@ BEGIN
     -- previous self-`UPDATE orders` which MySQL refuses to run.
     SET NEW.points_earned = @total_points;
 
+    -- M-197 / BUG-2026-003: recalculate the tier here too.
+    -- Previously `tier` was only recomputed in LoyaltyService.adjustPoints (the
+    -- admin manual-adjust path), so earning points through an order could never
+    -- promote anyone — Bagus sat at Bronze on 300 lifetime points with the Silver
+    -- threshold at 200. Three code paths move an order to 'paid', so the rule
+    -- lives here, at the single chokepoint, and cannot drift.
+    -- Thresholds MUST match TIER_THRESHOLDS in loyalty.service.ts.
+    SET @new_lifetime = (
+      SELECT lifetime_points_earned FROM member WHERE member_id = NEW.member_id
+    ) + @total_points;
+
+    SET @earned_tier = CASE
+      WHEN @new_lifetime >= 5000 THEN 'Platinum'
+      WHEN @new_lifetime >= 1000 THEN 'Gold'
+      WHEN @new_lifetime >= 200  THEN 'Silver'
+      ELSE 'Bronze'
+    END;
+
+    -- Promote only, never demote. lifetime_points_earned only grows, but seeded
+    -- members can sit ABOVE their earned tier (Nadia: 2678 lifetime, Platinum,
+    -- threshold 5000) and must not be demoted by their next purchase.
+    SET @current_rank = (
+      SELECT FIELD(tier, 'Bronze', 'Silver', 'Gold', 'Platinum')
+      FROM member WHERE member_id = NEW.member_id
+    );
+    SET @earned_rank = FIELD(@earned_tier, 'Bronze', 'Silver', 'Gold', 'Platinum');
+
     -- Credit points to member's balance
     UPDATE member
-    SET 
+    SET
       current_points = current_points + @total_points,
-      lifetime_points_earned = lifetime_points_earned + @total_points
+      lifetime_points_earned = @new_lifetime,
+      tier = IF(@earned_rank > @current_rank, @earned_tier, tier)
     WHERE member_id = NEW.member_id;
-    
+
     -- Log the transaction in points_history
     INSERT INTO points_history (
       member_id, 

@@ -9,6 +9,7 @@ import { Member } from './entities/member.entity';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { AdminUpdateMemberDto } from './dto/admin-update-member.dto';
 import { QueryMemberDto } from './dto/query-member.dto';
+import { normalisePhone } from '../common/utils/phone.util';
 
 @Injectable()
 export class MembersService {
@@ -32,6 +33,11 @@ export class MembersService {
   async updateMe(memberId: number, dto: UpdateMemberDto): Promise<Member> {
     const member = await this.findMe(memberId);
     Object.assign(member, dto);
+    // Registration and profile-edit are two write paths into the same UNIQUE
+    // column, so both must canonicalise or they reintroduce BUG-2026-004.
+    if (dto.phone_number !== undefined) {
+      member.phone_number = normalisePhone(dto.phone_number);
+    }
     return this.memberRepository.save(member);
   }
 
