@@ -22,6 +22,8 @@ import { CreateStaffDto } from './dto/create-staff.dto';
 import { UpdateStaffDto } from './dto/update-staff.dto';
 import { QueryStaffDto } from './dto/query-staff.dto';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/jwt.strategy';
 import { StaffRole } from '../common/enums';
 
 @ApiTags('staff')
@@ -37,8 +39,11 @@ export class StaffController {
     status: 200,
     description: 'List of staff returned successfully',
   })
-  findAll(@Query() query: QueryStaffDto) {
-    return this.staffService.findAll(query);
+  findAll(
+    @Query() query: QueryStaffDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.staffService.findAll(query, user.scopedOutletId);
   }
 
   @Roles(StaffRole.ADMIN)
@@ -48,8 +53,11 @@ export class StaffController {
     status: 200,
     description: 'Staff member returned successfully',
   })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.staffService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.staffService.findOne(id, user.scopedOutletId);
   }
 
   /// Only super_admin can create new staff under M-125 — outlet admins

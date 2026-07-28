@@ -111,10 +111,15 @@ export class ShiftsService {
     return updated;
   }
 
+  /// `scopedOutletId` is `null` for super_admin and the caller's own outlet_id
+  /// otherwise; when set it OVERRIDES the client-supplied `outlet_id` filter so
+  /// an outlet admin cannot read other outlets' shifts (M-188).
   async findAll(
     query: PaginationQueryDto & { staff_id?: number; outlet_id?: number },
+    scopedOutletId: number | null = null,
   ) {
-    const { page = 1, limit = 20, staff_id, outlet_id } = query;
+    const { page = 1, limit = 20, staff_id } = query;
+    const outlet_id = scopedOutletId ?? query.outlet_id;
     const skip = (page - 1) * limit;
 
     const qb = this.shiftRepository

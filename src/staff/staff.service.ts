@@ -19,14 +19,21 @@ export class StaffService {
     private readonly staffRepository: Repository<Staff>,
   ) {}
 
+  /// `scopedOutletId` is `null` for super_admin (cross-outlet) and the caller's
+  /// own outlet_id otherwise. When set it OVERRIDES any client-supplied
+  /// `outlet_id` filter — the query string is a convenience for super_admin, not
+  /// an authorisation boundary. Omitting the parameter used to return every
+  /// staff record in the company to any outlet admin (M-188).
   async findAll(
     query: PaginationQueryDto & {
       role?: StaffRole;
       outlet_id?: number;
       is_active?: boolean;
     },
+    scopedOutletId: number | null = null,
   ) {
-    const { page = 1, limit = 20, role, outlet_id, is_active } = query;
+    const { page = 1, limit = 20, role, is_active } = query;
+    const outlet_id = scopedOutletId ?? query.outlet_id;
     const skip = (page - 1) * limit;
 
     const qb = this.staffRepository
@@ -58,7 +65,14 @@ export class StaffService {
     };
   }
 
-  async findOne(id: number): Promise<Staff> {
+  /// Pass `scopedOutletId` from the caller so an outlet admin cannot read a
+  /// staff record belonging to another outlet (M-188). Deliberately reports
+  /// NotFound rather than Forbidden — a 403 would confirm the id exists and let
+  /// an outlet admin enumerate staff ids they have no business knowing about.
+  async findOne(
+    id: number,
+    scopedOutletId: number | null = null,
+  ): Promise<Staff> {
     const staff = await this.staffRepository
       .createQueryBuilder('staff')
       .leftJoinAndSelect('staff.outlet', 'outlet')
@@ -68,6 +82,13 @@ export class StaffService {
       .getOne();
 
     if (!staff) {
+      throw new NotFoundException(`Staff with ID ${id} not found`);
+    }
+
+    if (
+      scopedOutletId !== null &&
+      Number(staff.outlet_id) !== Number(scopedOutletId)
+    ) {
       throw new NotFoundException(`Staff with ID ${id} not found`);
     }
 

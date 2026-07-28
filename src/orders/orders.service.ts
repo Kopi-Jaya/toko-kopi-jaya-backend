@@ -384,7 +384,14 @@ export class OrdersService {
     };
   }
 
-  async findAllAdmin(query: QueryOrderDto) {
+  /// `scopedOutletId` is `null` for super_admin and the caller's own outlet_id
+  /// otherwise; when set it OVERRIDES the client-supplied `outlet_id` filter.
+  /// Without this an outlet admin who simply omitted the parameter saw every
+  /// outlet's orders (M-188).
+  async findAllAdmin(
+    query: QueryOrderDto,
+    scopedOutletId: number | null = null,
+  ) {
     const {
       page = 1,
       limit = 20,
@@ -394,8 +401,8 @@ export class OrdersService {
       date_from,
       date_to,
       pickup_code,
-      outlet_id,
     } = query;
+    const outlet_id = scopedOutletId ?? query.outlet_id;
     const skip = (page - 1) * limit;
 
     const qb = this.orderRepository

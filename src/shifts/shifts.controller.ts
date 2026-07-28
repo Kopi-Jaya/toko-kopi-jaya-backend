@@ -56,7 +56,10 @@ export class ShiftsController {
     status: 200,
     description: 'List of shifts returned successfully',
   })
-  findAll(@Query() query: QueryShiftDto) {
-    return this.shiftsService.findAll(query);
+  findAll(
+    @Query() query: QueryShiftDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.shiftsService.findAll(query, user.scopedOutletId);
   }
 }

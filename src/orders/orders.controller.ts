@@ -20,6 +20,8 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/jwt.strategy';
 import { StaffRole } from '../common/enums';
 
 @ApiTags('orders')
@@ -52,8 +54,11 @@ export class OrdersController {
     status: 200,
     description: 'List of orders returned successfully',
   })
-  findAllAdmin(@Query() query: QueryOrderDto) {
-    return this.ordersService.findAllAdmin(query);
+  findAllAdmin(
+    @Query() query: QueryOrderDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.ordersService.findAllAdmin(query, user.scopedOutletId);
   }
 
   @Roles(StaffRole.ADMIN, StaffRole.MANAGER, StaffRole.CASHIER)
