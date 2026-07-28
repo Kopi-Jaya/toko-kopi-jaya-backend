@@ -12,6 +12,11 @@ dist/
 # Sensitive credentials doc
 CREDENTIALS.md
 
+# Ad-hoc migration/inspection scripts — these hardcode SSH and DB
+# credentials, and this repo is public. Keep them local-only.
+sql/*.py
+sql/run_migration.cjs
+
 # Claude context
 .claude/
 

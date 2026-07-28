@@ -183,6 +183,7 @@ model outlet {
   staff      staff[]
   orders     orders[]
   shift      shift[]
+  events     events[]
 
   @@index([status])
 }
@@ -399,4 +400,24 @@ model favorite {
   product     products @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
 
   @@unique([staff_id, product_id])
+}
+
+model events {
+  event_id    Int      @id @default(autoincrement()) @db.UnsignedInt
+  outlet_id   BigInt?  @db.UnsignedBigInt
+  title       String   @db.VarChar(200)
+  description String?  @db.Text
+  img_url     String?  @db.VarChar(500)
+  tag         String?  @db.VarChar(50)
+  start_date  DateTime @db.Date
+  end_date    DateTime @db.Date
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  deleted_at  DateTime?
+  outlet      outlet?  @relation(fields: [outlet_id], references: [outlet_id])
+
+  @@index([outlet_id])
+  @@index([is_active])
+  @@index([start_date, end_date])
 }
