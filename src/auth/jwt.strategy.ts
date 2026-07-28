@@ -44,7 +44,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid token payload');
     }
 
-    const outletId = payload.outlet_id ?? null;
+    // MySQL returns BIGINT/INT columns as strings, and those strings survive
+    // into the signed JWT — so `outlet_id` arrives here as "4", not 4. Every
+    // scope check downstream is a strict `!==` against a number, which a
+    // string can never satisfy: an outlet admin was refused access to their
+    // OWN outlet (403 on every outlet-scoped write). Coerce at the boundary
+    // so consumers can rely on real numbers. (M-186)
+    const rawOutletId = payload.outlet_id;
+    const outletId =
+      rawOutletId === null || rawOutletId === undefined
+        ? null
+        : Number(rawOutletId);
     // Super-admins and members aren't outlet-scoped.
     const scopedOutletId =
       payload.type === 'staff' && payload.role !== 'super_admin'
@@ -52,7 +62,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         : null;
 
     return {
-      sub: payload.sub,
+      sub: Number(payload.sub),
       type: payload.type,
       role: payload.role,
       email: payload.email,
