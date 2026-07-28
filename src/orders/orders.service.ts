@@ -6,13 +6,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository, EntityManager } from 'typeorm';
+import { DataSource, Repository, EntityManager, In } from 'typeorm';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { OrderItemModifier } from './entities/order-item-modifier.entity';
 import { Product } from '../products/entities/product.entity';
 import { Modifier } from '../modifiers/entities/modifier.entity';
 import { Outlet } from '../outlets/entities/outlet.entity';
+import { OutletProduct } from '../outlets/entities/outlet-product.entity';
 import { Discount } from '../discounts/entities/discount.entity';
 import { Tax } from '../tax/entities/tax.entity';
 import { ServiceCharge } from '../service-charge/entities/service-charge.entity';
@@ -90,26 +91,59 @@ export class OrdersService {
         );
       }
 
-      // 2. Validate and load all products
-      const productIds = dto.items.map((item) => item.product_id);
-      const products = await queryRunner.manager.findByIds(Product, productIds);
-      const productMap = new Map(
-        products.map((p) => [Number(p.product_id), p]),
+      // 2. Validate and load all products THROUGH THE OUTLET'S MENU.
+      //
+      // M-194: this used to read the global `products` catalog directly, which
+      // caused two customer-facing defects:
+      //   a) the per-outlet `price_override` was ignored, so the customer was
+      //      charged `products.base_price` — not the price the menu showed them
+      //      (FEB UB displayed Rp 25.000 and charged Rp 28.000);
+      //   b) membership was never checked, so an item the outlet does not serve
+      //      could still be ordered (Nachos Pargos bought from Sawojajar).
+      //
+      // `outlet_products` is the authority for BOTH price and availability at a
+      // given outlet. It must stay the only source consulted here, so that the
+      // price quoted by GET /outlets/:id/products is the price charged.
+      const productIds = dto.items.map((item) => Number(item.product_id));
+      const menuRows = await queryRunner.manager.find(OutletProduct, {
+        where: { outlet_id: dto.outlet_id, product_id: In(productIds) },
+        relations: ['product'],
+      });
+      const menuMap = new Map(
+        menuRows.map((op) => [Number(op.product_id), op]),
       );
 
       for (const item of dto.items) {
-        const product = productMap.get(Number(item.product_id));
-        if (!product) {
+        const menuRow = menuMap.get(Number(item.product_id));
+        if (!menuRow) {
+          throw new BadRequestException(
+            `Product ${item.product_id} is not on the menu of outlet "${outlet.name}"`,
+          );
+        }
+        if (!menuRow.product) {
           throw new NotFoundException(
             `Product with ID ${item.product_id} not found`,
           );
         }
-        if (!product.is_available) {
+        if (!menuRow.product.is_available) {
           throw new BadRequestException(
-            `Product "${product.name}" is not available`,
+            `Product "${menuRow.product.name}" is not available`,
+          );
+        }
+        if (!menuRow.is_available) {
+          throw new BadRequestException(
+            `Product "${menuRow.product.name}" is not available at outlet "${outlet.name}"`,
           );
         }
       }
+
+      /// The price the outlet actually charges: its override, or the catalog
+      /// price when it has none. Mirrors `effective_price` in
+      /// OutletProductsService.findByOutlet — keep the two in step.
+      const effectivePriceOf = (productId: number): number => {
+        const op = menuMap.get(Number(productId))!;
+        return Number(op.price_override ?? op.product.base_price);
+      };
 
       // 3. Validate and load all modifiers
       const allModifierIds = dto.items.flatMap(
@@ -136,8 +170,7 @@ export class OrdersService {
       // 4. Calculate subtotal
       let subtotal = 0;
       for (const item of dto.items) {
-        const product = productMap.get(Number(item.product_id))!;
-        let itemTotal = Number(product.base_price) * item.quantity;
+        let itemTotal = effectivePriceOf(item.product_id) * item.quantity;
 
         if (item.modifiers) {
           for (const mod of item.modifiers) {
@@ -300,8 +333,7 @@ export class OrdersService {
 
       // 12. Create order items
       for (const item of dto.items) {
-        const product = productMap.get(Number(item.product_id))!;
-        const priceAtPurchase = Number(product.base_price);
+        const priceAtPurchase = effectivePriceOf(item.product_id);
 
         const orderItem = queryRunner.manager.create(OrderItem, {
           order_id: savedOrder.order_id,
