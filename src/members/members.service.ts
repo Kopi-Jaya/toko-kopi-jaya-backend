@@ -5,6 +5,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { instanceToPlain } from 'class-transformer';
+import * as bcrypt from 'bcrypt';
 import { Member } from './entities/member.entity';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { AdminUpdateMemberDto } from './dto/admin-update-member.dto';
@@ -39,6 +40,31 @@ export class MembersService {
       member.phone_number = normalisePhone(dto.phone_number);
     }
     return this.memberRepository.save(member);
+  }
+
+  /// Staff-assisted password reset — BUG-2026-009.
+  ///
+  /// The only recovery path that exists: member login is email + password, there
+  /// is no OTP and no SMTP configured, so without this a forgotten password meant
+  /// permanent loss of the account and its points.
+  ///
+  /// Deliberately does NOT reveal or log the password, and returns nothing but a
+  /// confirmation. Same bcrypt cost (12) as registration.
+  async resetPassword(id: number, newPassword: string): Promise<{ message: string }> {
+    const member = await this.memberRepository.findOne({
+      where: { member_id: id },
+    });
+
+    if (!member) {
+      throw new NotFoundException(`Member with ID ${id} not found`);
+    }
+
+    member.password = await bcrypt.hash(newPassword, 12);
+    await this.memberRepository.save(member);
+
+    return {
+      message: `Password for member ${id} has been reset`,
+    };
   }
 
   async adminUpdate(id: number, dto: AdminUpdateMemberDto): Promise<Member> {
