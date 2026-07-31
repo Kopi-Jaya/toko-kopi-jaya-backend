@@ -18,6 +18,18 @@ const TIER_THRESHOLDS: Record<MemberTier, number> = {
   [MemberTier.PLATINUM]: 5000,
 };
 
+// Points Earned = Base Points × Tier Multiplier (Ch. II §2.2.2 / Ch. VII "Fifth",
+// grounded in Drèze & Nunes 2008). Must match the CASE in
+// trg_credit_points_after_payment — that trigger is the only place multiplied
+// points are actually credited; this constant exists so the API can preview/
+// display the rate without duplicating the earning calculation itself.
+const TIER_MULTIPLIERS: Record<MemberTier, number> = {
+  [MemberTier.BRONZE]: 1.0,
+  [MemberTier.SILVER]: 1.1,
+  [MemberTier.GOLD]: 1.25,
+  [MemberTier.PLATINUM]: 1.5,
+};
+
 const TIER_ORDER: MemberTier[] = [
   MemberTier.BRONZE,
   MemberTier.SILVER,
@@ -83,6 +95,7 @@ export class LoyaltyService {
       current_points: member.current_points,
       lifetime_points_earned: member.lifetime_points_earned,
       tier: member.tier,
+      tier_multiplier: TIER_MULTIPLIERS[member.tier],
       total_orders: parseInt(orderStats.total_orders, 10),
       total_spent: parseFloat(orderStats.total_spent),
       tier_progress: {

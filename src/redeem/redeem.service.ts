@@ -15,6 +15,7 @@ import { OrderItem } from '../orders/entities/order-item.entity';
 import { Outlet } from '../outlets/entities/outlet.entity';
 import { Staff } from '../staff/entities/staff.entity';
 import {
+  MemberTier,
   PointsTransactionType,
   OrderStatus,
   OrderSource,
@@ -24,6 +25,17 @@ import {
 import { RedeemRewardDto } from './dto/redeem-reward.dto';
 import { CreateRedeemDto } from './dto/create-redeem.dto';
 import { UpdateRedeemDto } from './dto/update-redeem.dto';
+
+// Same ordering as loyalty.service.ts's TIER_ORDER and the trigger's FIELD()
+// rank comparison — kept as a local duplicate rather than a shared import
+// because the two services have no existing dependency on each other; matches
+// the project's established (if imperfect) convention for tier-rank tables.
+const TIER_ORDER: MemberTier[] = [
+  MemberTier.BRONZE,
+  MemberTier.SILVER,
+  MemberTier.GOLD,
+  MemberTier.PLATINUM,
+];
 
 @Injectable()
 export class RedeemService {
@@ -64,9 +76,12 @@ export class RedeemService {
       relations: ['product'],
     });
 
+    const memberRank = TIER_ORDER.indexOf(member.tier);
+
     return rewards.map((reward) => ({
       ...reward,
       is_affordable: member.current_points >= reward.point_cost,
+      is_eligible: reward.min_tier == null || memberRank >= TIER_ORDER.indexOf(reward.min_tier),
     }));
   }
 
@@ -76,6 +91,7 @@ export class RedeemService {
       point_cost: dto.point_cost,
       is_active: dto.is_active ?? true,
       stock_limit: dto.stock_limit ?? null,
+      min_tier: dto.min_tier ?? null,
     });
     return this.reedemRepository.save(reward);
   }
@@ -132,6 +148,16 @@ export class RedeemService {
         reward.redemption_count >= reward.stock_limit
       ) {
         throw new BadRequestException('This reward is out of stock');
+      }
+
+      // Check tier eligibility (tier-exclusive rewards)
+      if (
+        reward.min_tier != null &&
+        TIER_ORDER.indexOf(member.tier) < TIER_ORDER.indexOf(reward.min_tier)
+      ) {
+        throw new BadRequestException(
+          `This reward requires ${reward.min_tier} tier or above`,
+        );
       }
 
       // Check member has enough points

@@ -424,7 +424,8 @@ CREATE TABLE `reedem` (
   
   -- ★ REDEMPTION COST ★
   `point_cost` INT UNSIGNED NOT NULL COMMENT 'Points required to redeem this item (Burn Mechanism)',
-  
+  `min_tier` ENUM('Bronze','Silver','Gold','Platinum') NULL DEFAULT NULL COMMENT 'NULL = redeemable by any tier. Otherwise the minimum member tier required.',
+
   `is_active` BOOLEAN DEFAULT TRUE COMMENT 'Admin can toggle redemption availability',
   `stock_limit` INT UNSIGNED NULL COMMENT 'Optional: limit redemption quantity',
   `redemption_count` INT UNSIGNED DEFAULT 0 COMMENT 'Track popularity',
@@ -720,12 +721,33 @@ BEGIN
   -- Only execute when status changes to 'paid' and member exists
   IF NEW.status = 'paid' AND OLD.status != 'paid' AND NEW.member_id IS NOT NULL THEN
 
-    -- Calculate total points for the order
-    SET @total_points = (
+    -- Tier-based point multiplier (implements the thesis's Ch. VII "Suggestions
+    -- Fifth" enhancement / Ch. II §2.2.2 formula, grounded in Drèze & Nunes 2008).
+    -- Must use the member's tier BEFORE this purchase — a purchase that promotes
+    -- Silver->Gold earns at the Silver rate, not the rate it just unlocked.
+    -- Must match TIER_MULTIPLIERS in loyalty.service.ts.
+    SET @member_tier = (
+      SELECT tier FROM member WHERE member_id = NEW.member_id
+    );
+
+    SET @multiplier = CASE @member_tier
+      WHEN 'Bronze'   THEN 1.00
+      WHEN 'Silver'   THEN 1.10
+      WHEN 'Gold'     THEN 1.25
+      WHEN 'Platinum' THEN 1.50
+      ELSE 1.00
+    END;
+
+    -- Calculate base points for the order
+    SET @base_points = (
       SELECT COALESCE(SUM(total_points_for_line), 0)
       FROM order_items
       WHERE order_id = NEW.order_id
     );
+
+    -- FLOOR: points_earned/current_points/lifetime_points_earned are all
+    -- INT UNSIGNED — a fractional multiplier result must not be stored.
+    SET @total_points = FLOOR(@base_points * @multiplier);
 
     -- BEFORE UPDATE: set the value directly on NEW. This replaces the
     -- previous self-`UPDATE orders` which MySQL refuses to run.
@@ -752,10 +774,7 @@ BEGIN
     -- Promote only, never demote. lifetime_points_earned only grows, but seeded
     -- members can sit ABOVE their earned tier (Nadia: 2678 lifetime, Platinum,
     -- threshold 5000) and must not be demoted by their next purchase.
-    SET @current_rank = (
-      SELECT FIELD(tier, 'Bronze', 'Silver', 'Gold', 'Platinum')
-      FROM member WHERE member_id = NEW.member_id
-    );
+    SET @current_rank = FIELD(@member_tier, 'Bronze', 'Silver', 'Gold', 'Platinum');
     SET @earned_rank = FIELD(@earned_tier, 'Bronze', 'Silver', 'Gold', 'Platinum');
 
     -- Credit points to member's balance

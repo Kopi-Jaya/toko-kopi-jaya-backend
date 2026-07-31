@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Product } from '../../products/entities/product.entity';
+import { MemberTier } from '../../common/enums';
 
 @Entity('reedem')
 export class Reedem {
@@ -19,6 +20,9 @@ export class Reedem {
 
   @Column({ type: 'int', unsigned: true })
   point_cost: number;
+
+  @Column({ type: 'enum', enum: MemberTier, nullable: true, default: null })
+  min_tier: MemberTier | null;
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
