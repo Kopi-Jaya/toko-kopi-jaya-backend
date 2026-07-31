@@ -27,6 +27,7 @@ import { ServiceChargeModule } from './service-charge/service-charge.module';
 import { ShiftsModule } from './shifts/shifts.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { EventsModule } from './events/events.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { EventsModule } from './events/events.module';
     ShiftsModule,
     AnalyticsModule,
     EventsModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [
