@@ -76,6 +76,9 @@
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
+  "overrides": {
+    "js-yaml": "^5.2.2"
+  },
   "jest": {
     "moduleFileExtensions": [
       "js",
