@@ -130,4 +130,51 @@ export class AnalyticsService {
     if (query.limit) { sql += ' LIMIT ?'; params.push(query.limit); }
     return this.dataSource.query(sql, params);
   }
+
+  /// Points issued vs. redeemed and tier distribution — directly serves the
+  /// thesis's "Data Blindness" narrative (loyalty program visibility that
+  /// aggregator-mediated sales previously made impossible). points_history has
+  /// no outlet_id column, so outlet scoping joins through orders.order_id.
+  async getLoyaltyAnalytics(query: QueryAnalyticsDto) {
+    const pointsParams: any[] = [];
+    let pointsSql = `
+      SELECT
+        COALESCE(SUM(CASE WHEN ph.transaction_type = 'earned' THEN ph.points_change ELSE 0 END), 0) AS points_issued,
+        COALESCE(SUM(CASE WHEN ph.transaction_type = 'redeemed' THEN -ph.points_change ELSE 0 END), 0) AS points_redeemed
+      FROM points_history ph`;
+
+    if (query.outlet_id) {
+      pointsSql += ' JOIN orders o ON ph.order_id = o.order_id WHERE o.outlet_id = ?';
+      pointsParams.push(query.outlet_id);
+    } else {
+      pointsSql += ' WHERE 1=1';
+    }
+    if (query.date_from) { pointsSql += ' AND ph.created_at >= ?'; pointsParams.push(query.date_from); }
+    if (query.date_to) { pointsSql += ' AND ph.created_at <= ?'; pointsParams.push(query.date_to); }
+
+    const [pointsRow] = await this.dataSource.query(pointsSql, pointsParams);
+    const pointsIssued = Number(pointsRow.points_issued);
+    const pointsRedeemed = Number(pointsRow.points_redeemed);
+
+    // Tier distribution is member-level, not outlet-owned data — members
+    // aren't scoped to one outlet, so this is always computed company-wide
+    // regardless of the outlet filter (same reasoning as why `reedem`/`member`
+    // have no outlet_id column at all).
+    const tierRows = await this.dataSource.query(`
+      SELECT tier, COUNT(*) AS count FROM member GROUP BY tier
+    `);
+    const tierOrder = ['Bronze', 'Silver', 'Gold', 'Platinum'];
+    const tierCounts = new Map(tierRows.map((r: any) => [r.tier, Number(r.count)]));
+    const tierDistribution = tierOrder.map((tier) => ({
+      tier,
+      count: tierCounts.get(tier) ?? 0,
+    }));
+
+    return {
+      points_issued: pointsIssued,
+      points_redeemed: pointsRedeemed,
+      redemption_rate: pointsIssued > 0 ? pointsRedeemed / pointsIssued : 0,
+      tier_distribution: tierDistribution,
+    };
+  }
 }

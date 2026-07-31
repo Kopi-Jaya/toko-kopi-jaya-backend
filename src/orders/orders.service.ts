@@ -433,6 +433,7 @@ export class OrdersService {
       date_from,
       date_to,
       pickup_code,
+      member_id,
     } = query;
     const outlet_id = scopedOutletId ?? query.outlet_id;
     const skip = (page - 1) * limit;
@@ -457,6 +458,9 @@ export class OrdersService {
     }
     if (outlet_id !== undefined) {
       qb.andWhere('order.outlet_id = :outlet_id', { outlet_id });
+    }
+    if (member_id !== undefined) {
+      qb.andWhere('order.member_id = :member_id', { member_id });
     }
     if (date_from) {
       qb.andWhere('order.created_at >= :date_from', { date_from });

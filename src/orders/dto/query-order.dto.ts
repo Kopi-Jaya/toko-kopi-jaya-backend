@@ -54,4 +54,11 @@ export class QueryOrderDto extends PaginationQueryDto {
   @IsInt()
   @Min(1)
   outlet_id?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by member (admin member-detail order history)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  member_id?: number;
 }

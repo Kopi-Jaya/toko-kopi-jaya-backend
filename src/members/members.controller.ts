@@ -17,14 +17,19 @@ import { UpdateMemberDto } from './dto/update-member.dto';
 import { AdminUpdateMemberDto } from './dto/admin-update-member.dto';
 import { ResetMemberPasswordDto } from './dto/reset-member-password.dto';
 import { QueryMemberDto } from './dto/query-member.dto';
+import { QueryPointsHistoryDto } from './dto/query-points-history.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { StaffRole } from '../common/enums';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 
 @ApiTags('members')
 @ApiBearerAuth()
 @Controller('members')
 export class MembersController {
-  constructor(private readonly membersService: MembersService) {}
+  constructor(
+    private readonly membersService: MembersService,
+    private readonly loyaltyService: LoyaltyService,
+  ) {}
 
   @Get('me')
   @ApiOperation({ summary: 'Get current member profile' })
@@ -54,6 +59,21 @@ export class MembersController {
   @ApiResponse({ status: 200, description: 'Member returned successfully' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.membersService.findOne(id);
+  }
+
+  // Self-service GET /loyalty/me/points-history already existed; this is the
+  // admin-facing equivalent (Phase B, Analytical CRM: member detail history).
+  // Delegates to LoyaltyService rather than duplicating the pagination/filter
+  // logic that already lives there.
+  @Roles(StaffRole.ADMIN, StaffRole.MANAGER)
+  @Get(':id/points-history')
+  @ApiOperation({ summary: 'Get a member\'s points history (admin/manager)' })
+  @ApiResponse({ status: 200, description: 'Points history returned successfully' })
+  getPointsHistory(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: QueryPointsHistoryDto,
+  ) {
+    return this.loyaltyService.getPointsHistory(id, query);
   }
 
   @Roles(StaffRole.ADMIN, StaffRole.MANAGER)

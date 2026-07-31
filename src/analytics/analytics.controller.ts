@@ -80,4 +80,20 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getMemberLoyalty(this.scoped(query, user));
   }
+
+  @Roles(StaffRole.ADMIN, StaffRole.MANAGER)
+  @Get('loyalty')
+  @ApiOperation({
+    summary: 'Get loyalty program analytics (points issued/redeemed, tier distribution)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Loyalty analytics returned successfully',
+  })
+  getLoyaltyAnalytics(
+    @Query() query: QueryAnalyticsDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.analyticsService.getLoyaltyAnalytics(this.scoped(query, user));
+  }
 }
