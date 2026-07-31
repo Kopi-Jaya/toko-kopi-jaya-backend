@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, Min } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 
 export class QueryShiftDto extends PaginationQueryDto {
@@ -17,4 +17,14 @@ export class QueryShiftDto extends PaginationQueryDto {
   @IsInt()
   @Min(1)
   outlet_id?: number;
+
+  @ApiPropertyOptional({ description: 'Filter from date (ISO 8601)' })
+  @IsOptional()
+  @IsDateString()
+  date_from?: string;
+
+  @ApiPropertyOptional({ description: 'Filter to date (ISO 8601)' })
+  @IsOptional()
+  @IsDateString()
+  date_to?: string;
 }

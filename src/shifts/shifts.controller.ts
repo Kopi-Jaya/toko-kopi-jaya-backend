@@ -62,4 +62,17 @@ export class ShiftsController {
   ) {
     return this.shiftsService.findAll(query, user.scopedOutletId);
   }
+
+  @Roles(StaffRole.ADMIN, StaffRole.MANAGER)
+  @Get('discrepancy-summary')
+  @ApiOperation({
+    summary: 'Get ended shifts with a non-zero cash discrepancy (Operational CRM)',
+  })
+  @ApiResponse({ status: 200, description: 'Discrepancy summary returned successfully' })
+  getDiscrepancySummary(
+    @Query() query: QueryShiftDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.shiftsService.getDiscrepancySummary(user.scopedOutletId, query);
+  }
 }

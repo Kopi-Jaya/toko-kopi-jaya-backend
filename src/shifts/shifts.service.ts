@@ -148,4 +148,47 @@ export class ShiftsService {
       },
     };
   }
+
+  /// Operational CRM: `shift.discrepancy` is a GENERATED column
+  /// (final_cash - cash_in_hand - total_cash_received + total_cash_out) that
+  /// already existed but was only ever shown as a raw table column, with no
+  /// aggregation or flagging. Only ended shifts have a meaningful discrepancy —
+  /// an open shift's final_cash/total_cash_received/total_cash_out are all
+  /// still their zero defaults, which would otherwise show as a false
+  /// discrepancy of 0 (harmless) or, once a shift is genuinely completed,
+  /// a real mismatch worth surfacing.
+  async getDiscrepancySummary(
+    scopedOutletId: number | null = null,
+    query: { outlet_id?: number; date_from?: string; date_to?: string } = {},
+  ) {
+    const outlet_id = scopedOutletId ?? query.outlet_id;
+
+    const qb = this.shiftRepository
+      .createQueryBuilder('shift')
+      .leftJoinAndSelect('shift.staff', 'staff')
+      .leftJoinAndSelect('shift.outlet', 'outlet')
+      .where('shift.end_time IS NOT NULL')
+      .andWhere('shift.discrepancy != 0');
+
+    if (outlet_id) {
+      qb.andWhere('shift.outlet_id = :outlet_id', { outlet_id });
+    }
+    if (query.date_from) {
+      qb.andWhere('shift.start_time >= :date_from', { date_from: query.date_from });
+    }
+    if (query.date_to) {
+      qb.andWhere('shift.start_time <= :date_to', { date_to: query.date_to });
+    }
+
+    qb.orderBy('ABS(shift.discrepancy)', 'DESC');
+
+    const shifts = await qb.getMany();
+    const totalDiscrepancy = shifts.reduce((sum, s) => sum + Number(s.discrepancy), 0);
+
+    return {
+      shifts_with_discrepancy: shifts.length,
+      total_discrepancy_amount: totalDiscrepancy,
+      shifts,
+    };
+  }
 }
