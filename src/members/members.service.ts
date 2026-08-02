@@ -80,11 +80,29 @@ export class MembersService {
     return this.memberRepository.save(member);
   }
 
-  async findAll(query: QueryMemberDto) {
+  /// `scopedOutletId` is `null` for super_admin and the caller's own outlet_id
+  /// otherwise. A member isn't tied to one outlet (they can order from any), so
+  /// "this outlet's members" means "members with at least one order here" —
+  /// checked via EXISTS rather than a JOIN so a member with multiple orders at
+  /// the outlet can't duplicate rows and skew the paginated count.
+  ///
+  /// BUG-2026-015: this had no scoping at all — a branch admin's `GET /members`
+  /// returned every member company-wide, including email/phone, identical to
+  /// what a super_admin sees. Orders/Products/Staff were already correctly
+  /// scoped on the same account, so the gap was isolated to this endpoint (and
+  /// the identical one in `customers.service.ts`).
+  async findAll(query: QueryMemberDto, scopedOutletId: number | null = null) {
     const { page = 1, limit = 20, search, tier } = query;
     const skip = (page - 1) * limit;
 
     const qb = this.memberRepository.createQueryBuilder('member');
+
+    if (scopedOutletId !== null) {
+      qb.andWhere(
+        `EXISTS (SELECT 1 FROM orders scoped_order WHERE scoped_order.member_id = member.member_id AND scoped_order.outlet_id = :scopedOutletId)`,
+        { scopedOutletId },
+      );
+    }
 
     if (search) {
       qb.andWhere(

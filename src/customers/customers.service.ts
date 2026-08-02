@@ -32,15 +32,28 @@ export class CustomersService {
     return this.customerRepository.save(customer);
   }
 
-  async findAll(query: PaginationQueryDto) {
+  /// `scopedOutletId` is `null` for super_admin, the caller's outlet_id
+  /// otherwise — same pattern as `MembersService.findAll` (BUG-2026-015): a
+  /// walk-in customer isn't tied to one outlet, so scoping means "has at
+  /// least one order at this outlet", via EXISTS to avoid duplicating rows.
+  async findAll(query: PaginationQueryDto, scopedOutletId: number | null = null) {
     const { page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
 
-    const [data, total_items] = await this.customerRepository.findAndCount({
-      order: { created_at: 'DESC' },
-      skip,
-      take: limit,
-    });
+    const qb = this.customerRepository
+      .createQueryBuilder('customer')
+      .orderBy('customer.created_at', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    if (scopedOutletId !== null) {
+      qb.andWhere(
+        `EXISTS (SELECT 1 FROM orders scoped_order WHERE scoped_order.customer_id = customer.customer_id AND scoped_order.outlet_id = :scopedOutletId)`,
+        { scopedOutletId },
+      );
+    }
+
+    const [data, total_items] = await qb.getManyAndCount();
 
     return {
       data,

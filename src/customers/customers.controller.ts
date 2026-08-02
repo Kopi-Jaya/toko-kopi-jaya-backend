@@ -6,6 +6,8 @@ import {
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/jwt.strategy';
 import { StaffRole } from '../common/enums';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
@@ -19,7 +21,10 @@ export class CustomersController {
   @Get()
   @ApiOperation({ summary: 'Get all customers' })
   @ApiResponse({ status: 200, description: 'List of customers returned successfully' })
-  findAll(@Query() query: PaginationQueryDto) {
-    return this.customersService.findAll(query);
+  findAll(
+    @Query() query: PaginationQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.customersService.findAll(query, user.scopedOutletId);
   }
 }

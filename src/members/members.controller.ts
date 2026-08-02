@@ -19,6 +19,8 @@ import { ResetMemberPasswordDto } from './dto/reset-member-password.dto';
 import { QueryMemberDto } from './dto/query-member.dto';
 import { QueryPointsHistoryDto } from './dto/query-points-history.dto';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/jwt.strategy';
 import { StaffRole } from '../common/enums';
 import { LoyaltyService } from '../loyalty/loyalty.service';
 
@@ -49,8 +51,11 @@ export class MembersController {
   @Get()
   @ApiOperation({ summary: 'Get all members (admin/manager)' })
   @ApiResponse({ status: 200, description: 'List of members returned successfully' })
-  findAll(@Query() query: QueryMemberDto) {
-    return this.membersService.findAll(query);
+  findAll(
+    @Query() query: QueryMemberDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.membersService.findAll(query, user.scopedOutletId);
   }
 
   @Roles(StaffRole.ADMIN, StaffRole.MANAGER)

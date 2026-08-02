@@ -13,7 +13,9 @@ export class EventsService {
     private readonly eventRepository: Repository<Event>,
   ) {}
 
-  async findAll(query: QueryEventDto): Promise<Event[]> {
+  async findAll(query: QueryEventDto) {
+    const { page = 1, limit = 20 } = query;
+
     const qb = this.eventRepository
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.outlet', 'outlet')
@@ -35,7 +37,19 @@ export class EventsService {
       qb.andWhere('event.end_date >= :today', { today });
     }
 
-    return qb.getMany();
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [data, total_items] = await qb.getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total_items,
+        total_pages: Math.ceil(total_items / limit),
+      },
+    };
   }
 
   async findOne(id: number): Promise<Event> {
